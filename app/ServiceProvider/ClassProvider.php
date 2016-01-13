@@ -4,7 +4,6 @@ namespace Kanboard\ServiceProvider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-use League\HTMLToMarkdown\HtmlConverter;
 use Kanboard\Core\Mail\Client as EmailClient;
 use Kanboard\Core\ObjectStorage\FileStorage;
 use Kanboard\Core\Paginator;
@@ -17,6 +16,7 @@ class ClassProvider implements ServiceProviderInterface
     private $classes = array(
         'Model' => array(
             'Action',
+            'ActionParameter',
             'Authentication',
             'Board',
             'Category',
@@ -32,6 +32,7 @@ class ClassProvider implements ServiceProviderInterface
             'Link',
             'Notification',
             'OverdueNotification',
+            'PasswordReset',
             'Project',
             'ProjectActivity',
             'ProjectAnalytic',
@@ -62,7 +63,6 @@ class ClassProvider implements ServiceProviderInterface
             'TaskPermission',
             'TaskPosition',
             'TaskStatus',
-            'TaskValidator',
             'TaskImport',
             'TaskMetadata',
             'Transition',
@@ -84,11 +84,23 @@ class ClassProvider implements ServiceProviderInterface
             'UserFilterAutoCompleteFormatter',
             'GroupAutoCompleteFormatter',
         ),
+        'Validator' => array(
+            'PasswordResetValidator',
+            'ProjectValidator',
+            'SubtaskValidator',
+            'SwimlaneValidator',
+            'TaskValidator',
+            'TaskLinkValidator',
+            'UserValidator',
+        ),
         'Core' => array(
             'DateParser',
             'Helper',
             'Lexer',
             'Template',
+        ),
+        'Core\Event' => array(
+            'EventManager',
         ),
         'Core\Http' => array(
             'Request',
@@ -110,11 +122,6 @@ class ClassProvider implements ServiceProviderInterface
             'UserSync',
             'UserSession',
             'UserProfile',
-        ),
-        'Integration' => array(
-            'BitbucketWebhook',
-            'GithubWebhook',
-            'GitlabWebhook',
         )
     );
 
@@ -132,10 +139,6 @@ class ClassProvider implements ServiceProviderInterface
 
         $container['httpClient'] = function ($c) {
             return new HttpClient($c);
-        };
-
-        $container['htmlConverter'] = function () {
-            return new HtmlConverter(array('strip_tags' => true));
         };
 
         $container['objectStorage'] = function () {

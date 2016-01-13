@@ -108,7 +108,7 @@ class User extends Base
     public function save()
     {
         $values = $this->request->getValues();
-        list($valid, $errors) = $this->user->validateCreation($values);
+        list($valid, $errors) = $this->userValidator->validateCreation($values);
 
         if ($valid) {
             $project_id = empty($values['project_id']) ? 0 : $values['project_id'];
@@ -168,6 +168,20 @@ class User extends Base
 
         $this->response->html($this->layout('user/timesheet', array(
             'subtask_paginator' => $subtask_paginator,
+            'user' => $user,
+        )));
+    }
+
+    /**
+     * Display last password reset
+     *
+     * @access public
+     */
+    public function passwordReset()
+    {
+        $user = $this->getUser();
+        $this->response->html($this->layout('user/password_reset', array(
+            'tokens' => $this->passwordReset->getAll($user['id']),
             'user' => $user,
         )));
     }
@@ -315,7 +329,7 @@ class User extends Base
 
         if ($this->request->isPost()) {
             $values = $this->request->getValues();
-            list($valid, $errors) = $this->user->validatePasswordModification($values);
+            list($valid, $errors) = $this->userValidator->validatePasswordModification($values);
 
             if ($valid) {
                 if ($this->user->update($values)) {
@@ -357,7 +371,7 @@ class User extends Base
                 }
             }
 
-            list($valid, $errors) = $this->user->validateModification($values);
+            list($valid, $errors) = $this->userValidator->validateModification($values);
 
             if ($valid) {
                 if ($this->user->update($values)) {
@@ -395,7 +409,7 @@ class User extends Base
 
         if ($this->request->isPost()) {
             $values = $this->request->getValues() + array('disable_login_form' => 0, 'is_ldap_user' => 0);
-            list($valid, $errors) = $this->user->validateModification($values);
+            list($valid, $errors) = $this->userValidator->validateModification($values);
 
             if ($valid) {
                 if ($this->user->update($values)) {

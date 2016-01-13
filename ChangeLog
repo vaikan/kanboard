@@ -1,24 +1,54 @@
-Version 1.0.23 (unreleased)
+Version 1.0.24 (unreleased)
 ---------------------------
 
 New features:
 
-- Added support of user mentions (@username)
-- Added report to compare working hours between open and closed tasks
-- Added the possiblity to define custom routes from plugins
-- Added new method to remove metadata
+* Forgot Password
+* Add Malay language
 
 Improvements:
 
-- Improving performance during task position change (SQL queries are 3 times faster than before)
-- Do not show window scrollbars when individual column scrolling is enabled
+* Add dropdown menu for subtasks, categories, swimlanes, columns, custom filters, task links and groups
+* Add new template hooks
 
 Bug fixes:
 
-- Fix compatiblity issue with FreeBSD for session.hash_function parameter
-- Fix wrong constant name that cause a PHP error in project management section
-- Fix pagination in group members listing
-- Avoid PHP error when enabling LDAP group provider with PHP < 5.5
+* Automatic action listeners were using the same instance
+
+Version 1.0.23
+--------------
+
+Breaking changes:
+
+* Plugin API changes for Automatic Actions
+* Automatic Action to close a task doesn't have the column parameter anymore (use the action "Close a task in a specific column")
+* Action name stored in the database is now the absolute class name
+* Core functionalities moved to external plugins:
+    - Github Webhook: https://github.com/kanboard/plugin-github-webhook
+    - Gitlab Webhook: https://github.com/kanboard/plugin-gitlab-webhook
+    - Bitbucket Webhook: https://github.com/kanboard/plugin-bitbucket-webhook
+
+New features:
+
+* Added support of user mentions (@username)
+* Added report to compare working hours between open and closed tasks
+* Added the possibility to define custom routes from plugins
+* Added new method to remove metadata
+
+Improvements:
+
+* Improve Two-Factor activation and plugin API
+* Improving performance during task position change (SQL queries are 3 times faster than before)
+* Do not show window scrollbars when individual column scrolling is enabled
+* Automatic Actions code improvements and unit tests
+* Increase action name column length in actions table
+
+Bug fixes:
+
+* Fix compatibility issue with FreeBSD for session.hash_function parameter
+* Fix wrong constant name that causes a PHP error in project management section
+* Fix pagination in group members listing
+* Avoid PHP error when enabling LDAP group provider with PHP < 5.5
 
 Version 1.0.22
 --------------

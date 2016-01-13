@@ -36,6 +36,7 @@ class Config extends Setting
             'SEK' => t('SEK - Swedish Krona'),
             'NOK' => t('NOK - Norwegian Krone'),
             'BAM' => t('BAM - Konvertible Mark'),
+            'RUB' => t('RUB - Russian Ruble'),
         );
     }
 
@@ -79,6 +80,7 @@ class Config extends Setting
             'fr_FR' => 'Français',
             'it_IT' => 'Italiano',
             'hu_HU' => 'Magyar',
+            'my_MY' => 'Melayu',
             'nl_NL' => 'Nederlands',
             'nb_NO' => 'Norsk',
             'pl_PL' => 'Polski',

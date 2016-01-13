@@ -10,7 +10,9 @@ use Pimple\Container;
  * @package core
  * @author  Frederic Guillot
  *
+ * @property \Kanboard\Core\Action\ActionManager                        $actionManager
  * @property \Kanboard\Core\Cache\MemoryCache                           $memoryCache
+ * @property \Kanboard\Core\Event\EventManager                          $eventManager
  * @property \Kanboard\Core\Group\GroupManager                          $groupManager
  * @property \Kanboard\Core\Http\Client                                 $httpClient
  * @property \Kanboard\Core\Http\OAuth2                                 $oauth
@@ -43,9 +45,6 @@ use Pimple\Container;
  * @property \Kanboard\Core\Lexer                                       $lexer
  * @property \Kanboard\Core\Paginator                                   $paginator
  * @property \Kanboard\Core\Template                                    $template
- * @property \Kanboard\Integration\BitbucketWebhook                     $bitbucketWebhook
- * @property \Kanboard\Integration\GithubWebhook                        $githubWebhook
- * @property \Kanboard\Integration\GitlabWebhook                        $gitlabWebhook
  * @property \Kanboard\Formatter\ProjectGanttFormatter                  $projectGanttFormatter
  * @property \Kanboard\Formatter\TaskFilterGanttFormatter               $taskFilterGanttFormatter
  * @property \Kanboard\Formatter\TaskFilterAutoCompleteFormatter        $taskFilterAutoCompleteFormatter
@@ -54,6 +53,7 @@ use Pimple\Container;
  * @property \Kanboard\Formatter\UserFilterAutoCompleteFormatter        $userFilterAutoCompleteFormatter
  * @property \Kanboard\Formatter\GroupAutoCompleteFormatter             $groupAutoCompleteFormatter
  * @property \Kanboard\Model\Action                                     $action
+ * @property \Kanboard\Model\ActionParameter                            $actionParameter
  * @property \Kanboard\Model\Authentication                             $authentication
  * @property \Kanboard\Model\Board                                      $board
  * @property \Kanboard\Model\Category                                   $category
@@ -69,6 +69,7 @@ use Pimple\Container;
  * @property \Kanboard\Model\Link                                       $link
  * @property \Kanboard\Model\Notification                               $notification
  * @property \Kanboard\Model\OverdueNotification                        $overdueNotification
+ * @property \Kanboard\Model\PasswordReset                              $passwordReset
  * @property \Kanboard\Model\Project                                    $project
  * @property \Kanboard\Model\ProjectActivity                            $projectActivity
  * @property \Kanboard\Model\ProjectAnalytic                            $projectAnalytic
@@ -78,6 +79,7 @@ use Pimple\Container;
  * @property \Kanboard\Model\ProjectMetadata                            $projectMetadata
  * @property \Kanboard\Model\ProjectPermission                          $projectPermission
  * @property \Kanboard\Model\ProjectUserRole                            $projectUserRole
+ * @property \Kanboard\Model\projectUserRoleFilter                      $projectUserRoleFilter
  * @property \Kanboard\Model\ProjectGroupRole                           $projectGroupRole
  * @property \Kanboard\Model\ProjectNotification                        $projectNotification
  * @property \Kanboard\Model\ProjectNotificationType                    $projectNotificationType
@@ -99,20 +101,26 @@ use Pimple\Container;
  * @property \Kanboard\Model\TaskPermission                             $taskPermission
  * @property \Kanboard\Model\TaskPosition                               $taskPosition
  * @property \Kanboard\Model\TaskStatus                                 $taskStatus
- * @property \Kanboard\Model\TaskValidator                              $taskValidator
  * @property \Kanboard\Model\TaskMetadata                               $taskMetadata
  * @property \Kanboard\Model\Transition                                 $transition
  * @property \Kanboard\Model\User                                       $user
  * @property \Kanboard\Model\UserImport                                 $userImport
  * @property \Kanboard\Model\UserLocking                                $userLocking
+ * @property \Kanboard\Model\UserMention                                $userMention
  * @property \Kanboard\Model\UserNotification                           $userNotification
  * @property \Kanboard\Model\UserNotificationType                       $userNotificationType
  * @property \Kanboard\Model\UserNotificationFilter                     $userNotificationFilter
  * @property \Kanboard\Model\UserUnreadNotification                     $userUnreadNotification
  * @property \Kanboard\Model\UserMetadata                               $userMetadata
  * @property \Kanboard\Model\Webhook                                    $webhook
+ * @property \Kanboard\Validator\PasswordResetValidator                 $passwordResetValidator
+ * @property \Kanboard\Validator\ProjectValidator                       $projectValidator
+ * @property \Kanboard\Validator\SubtaskValidator                       $subtaskValidator
+ * @property \Kanboard\Validator\SwimlaneValidator                      $swimlaneValidator
+ * @property \Kanboard\Validator\TaskLinkValidator                      $taskLinkValidator
+ * @property \Kanboard\Validator\TaskValidator                          $taskValidator
+ * @property \Kanboard\Validator\UserValidator                          $userValidator
  * @property \Psr\Log\LoggerInterface                                   $logger
- * @property \League\HTMLToMarkdown\HtmlConverter                       $htmlConverter
  * @property \PicoDb\Database                                           $db
  * @property \Symfony\Component\EventDispatcher\EventDispatcher         $dispatcher
  */
