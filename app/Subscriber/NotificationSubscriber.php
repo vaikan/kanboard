@@ -2,15 +2,14 @@
 
 namespace Kanboard\Subscriber;
 
-use Kanboard\Core\Base;
 use Kanboard\Event\GenericEvent;
 use Kanboard\Model\Task;
 use Kanboard\Model\Comment;
 use Kanboard\Model\Subtask;
-use Kanboard\Model\File;
+use Kanboard\Model\TaskFile;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class NotificationSubscriber extends Base implements EventSubscriberInterface
+class NotificationSubscriber extends BaseSubscriber implements EventSubscriberInterface
 {
     public static function getSubscribedEvents()
     {
@@ -29,20 +28,23 @@ class NotificationSubscriber extends Base implements EventSubscriberInterface
             Comment::EVENT_CREATE => 'handleEvent',
             Comment::EVENT_UPDATE => 'handleEvent',
             Comment::EVENT_USER_MENTION => 'handleEvent',
-            File::EVENT_CREATE => 'handleEvent',
+            TaskFile::EVENT_CREATE => 'handleEvent',
         );
     }
 
     public function handleEvent(GenericEvent $event, $event_name)
     {
-        $event_data = $this->getEventData($event);
+        if (! $this->isExecuted($event_name)) {
+            $this->logger->debug('Subscriber executed: '.__METHOD__);
+            $event_data = $this->getEventData($event);
 
-        if (! empty($event_data)) {
-            if (! empty($event['mention'])) {
-                $this->userNotification->sendUserNotification($event['mention'], $event_name, $event_data);
-            } else {
-                $this->userNotification->sendNotifications($event_name, $event_data);
-                $this->projectNotification->sendNotifications($event_data['task']['project_id'], $event_name, $event_data);
+            if (! empty($event_data)) {
+                if (! empty($event['mention'])) {
+                    $this->userNotification->sendUserNotification($event['mention'], $event_name, $event_data);
+                } else {
+                    $this->userNotification->sendNotifications($event_name, $event_data);
+                    $this->projectNotification->sendNotifications($event_data['task']['project_id'], $event_name, $event_data);
+                }
             }
         }
     }

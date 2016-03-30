@@ -71,7 +71,17 @@ class UserNotification extends Base
             return $this->getEverybodyWithNotificationEnabled($exclude_user_id);
         }
 
-        return $this->getProjectMembersWithNotificationEnabled($project_id, $exclude_user_id);
+        $users = array();
+        $members = $this->getProjectUserMembersWithNotificationEnabled($project_id, $exclude_user_id);
+        $groups = $this->getProjectGroupMembersWithNotificationEnabled($project_id, $exclude_user_id);
+
+        foreach (array_merge($members, $groups) as $user) {
+            if (! isset($users[$user['id']])) {
+                $users[$user['id']] = $user;
+            }
+        }
+
+        return array_values($users);
     }
 
     /**
@@ -107,23 +117,20 @@ class UserNotification extends Base
      */
     public function saveSettings($user_id, array $values)
     {
-        $this->db->startTransaction();
+        $types = empty($values['notification_types']) ? array() : array_keys($values['notification_types']);
 
-        if (isset($values['notifications_enabled']) && $values['notifications_enabled'] == 1) {
+        if (! empty($types)) {
             $this->enableNotification($user_id);
-
-            $filter = empty($values['notifications_filter']) ? UserNotificationFilter::FILTER_BOTH : $values['notifications_filter'];
-            $projects = empty($values['notification_projects']) ? array() : array_keys($values['notification_projects']);
-            $types = empty($values['notification_types']) ? array() : array_keys($values['notification_types']);
-
-            $this->userNotificationFilter->saveFilter($user_id, $filter);
-            $this->userNotificationFilter->saveSelectedProjects($user_id, $projects);
-            $this->userNotificationType->saveSelectedTypes($user_id, $types);
         } else {
             $this->disableNotification($user_id);
         }
 
-        $this->db->closeTransaction();
+        $filter = empty($values['notifications_filter']) ? UserNotificationFilter::FILTER_BOTH : $values['notifications_filter'];
+        $project_ids = empty($values['notification_projects']) ? array() : array_keys($values['notification_projects']);
+
+        $this->userNotificationFilter->saveFilter($user_id, $filter);
+        $this->userNotificationFilter->saveSelectedProjects($user_id, $project_ids);
+        $this->userNotificationType->saveSelectedTypes($user_id, $types);
     }
 
     /**
@@ -142,14 +149,14 @@ class UserNotification extends Base
     }
 
     /**
-     * Get a list of project members with notification enabled
+     * Get a list of group members with notification enabled
      *
      * @access private
      * @param  integer   $project_id        Project id
      * @param  integer   $exclude_user_id   User id to exclude
      * @return array
      */
-    private function getProjectMembersWithNotificationEnabled($project_id, $exclude_user_id)
+    private function getProjectUserMembersWithNotificationEnabled($project_id, $exclude_user_id)
     {
         return $this->db
             ->table(ProjectUserRole::TABLE)
@@ -157,6 +164,19 @@ class UserNotification extends Base
             ->join(User::TABLE, 'id', 'user_id')
             ->eq('project_id', $project_id)
             ->eq('notifications_enabled', '1')
+            ->neq(User::TABLE.'.id', $exclude_user_id)
+            ->findAll();
+    }
+
+    private function getProjectGroupMembersWithNotificationEnabled($project_id, $exclude_user_id)
+    {
+        return $this->db
+            ->table(ProjectGroupRole::TABLE)
+            ->columns(User::TABLE.'.id', User::TABLE.'.username', User::TABLE.'.name', User::TABLE.'.email', User::TABLE.'.language', User::TABLE.'.notifications_filter')
+            ->join(GroupMember::TABLE, 'group_id', 'group_id', ProjectGroupRole::TABLE)
+            ->join(User::TABLE, 'id', 'user_id', GroupMember::TABLE)
+            ->eq(ProjectGroupRole::TABLE.'.project_id', $project_id)
+            ->eq(User::TABLE.'.notifications_enabled', '1')
             ->neq(User::TABLE.'.id', $exclude_user_id)
             ->findAll();
     }

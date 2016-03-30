@@ -2,11 +2,11 @@
 
 require_once __DIR__.'/../Base.php';
 
+use Kanboard\Core\DateParser;
 use Kanboard\Model\Task;
 use Kanboard\Model\TaskCreation;
 use Kanboard\Model\TaskDuplication;
 use Kanboard\Model\TaskFinder;
-use Kanboard\Model\TaskStatus;
 use Kanboard\Model\Project;
 use Kanboard\Model\ProjectUserRole;
 use Kanboard\Model\Category;
@@ -57,8 +57,8 @@ class TaskDuplicationTest extends Base
         // Some categories
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 1)));
         $this->assertNotFalse($c->create(array('name' => 'Category #2', 'project_id' => 1)));
-        $this->assertTrue($c->exists(1, 1));
-        $this->assertTrue($c->exists(2, 1));
+        $this->assertTrue($c->exists(1));
+        $this->assertTrue($c->exists(2));
 
         $this->assertEquals(
             1,
@@ -110,7 +110,7 @@ class TaskDuplicationTest extends Base
         $this->assertEquals(2, $p->create(array('name' => 'test2')));
 
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 1)));
-        $this->assertTrue($c->exists(1, 1));
+        $this->assertTrue($c->exists(1));
 
         // We create a task
         $this->assertEquals(1, $tc->create(array('title' => 'test', 'project_id' => 1, 'column_id' => 2, 'owner_id' => 1, 'category_id' => 1)));
@@ -151,8 +151,8 @@ class TaskDuplicationTest extends Base
 
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 1)));
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 2)));
-        $this->assertTrue($c->exists(1, 1));
-        $this->assertTrue($c->exists(2, 2));
+        $this->assertTrue($c->exists(1));
+        $this->assertTrue($c->exists(2));
 
         // We create a task
         $this->assertEquals(1, $tc->create(array('title' => 'test', 'project_id' => 1, 'column_id' => 2, 'category_id' => 1)));
@@ -187,9 +187,9 @@ class TaskDuplicationTest extends Base
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 1)));
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 2)));
         $this->assertNotFalse($c->create(array('name' => 'Category #2', 'project_id' => 2)));
-        $this->assertTrue($c->exists(1, 1));
-        $this->assertTrue($c->exists(2, 2));
-        $this->assertTrue($c->exists(3, 2));
+        $this->assertTrue($c->exists(1));
+        $this->assertTrue($c->exists(2));
+        $this->assertTrue($c->exists(3));
 
         // We create a task
         $this->assertEquals(1, $tc->create(array('title' => 'test', 'project_id' => 1, 'column_id' => 2, 'category_id' => 1)));
@@ -468,8 +468,8 @@ class TaskDuplicationTest extends Base
 
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 1)));
         $this->assertNotFalse($c->create(array('name' => 'Category #1', 'project_id' => 2)));
-        $this->assertTrue($c->exists(1, 1));
-        $this->assertTrue($c->exists(2, 2));
+        $this->assertTrue($c->exists(1));
+        $this->assertTrue($c->exists(2));
 
         // We create a task
         $this->assertEquals(1, $tc->create(array('title' => 'test', 'project_id' => 1, 'column_id' => 2, 'category_id' => 1)));
@@ -665,6 +665,7 @@ class TaskDuplicationTest extends Base
         $tf = new TaskFinder($this->container);
         $p = new Project($this->container);
         $c = new Category($this->container);
+        $dp = new DateParser($this->container);
 
         $this->assertEquals(1, $p->create(array('name' => 'test1')));
 
@@ -685,7 +686,7 @@ class TaskDuplicationTest extends Base
         $this->assertNotEmpty($task);
         $this->assertEquals(Task::RECURRING_STATUS_PROCESSED, $task['recurrence_status']);
         $this->assertEquals(2, $task['recurrence_child']);
-        $this->assertEquals(1436561776, $task['date_due'], '', 2);
+        $this->assertEquals(1436486400, $task['date_due'], '', 2);
 
         $task = $tf->getById(2);
         $this->assertNotEmpty($task);
@@ -695,6 +696,6 @@ class TaskDuplicationTest extends Base
         $this->assertEquals(Task::RECURRING_BASEDATE_TRIGGERDATE, $task['recurrence_basedate']);
         $this->assertEquals(1, $task['recurrence_parent']);
         $this->assertEquals(2, $task['recurrence_factor']);
-        $this->assertEquals(strtotime('+2 days'), $task['date_due'], '', 2);
+        $this->assertEquals($dp->removeTimeFromTimestamp(strtotime('+2 days')), $task['date_due'], '', 2);
     }
 }

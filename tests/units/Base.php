@@ -10,49 +10,7 @@ use SimpleLogger\Logger;
 use SimpleLogger\File;
 use Kanboard\Core\Session\FlashMessage;
 use Kanboard\Core\Session\SessionStorage;
-
-class FakeHttpClient
-{
-    private $url = '';
-    private $data = array();
-    private $headers = array();
-
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    public function getData()
-    {
-        return $this->data;
-    }
-
-    public function getHeaders()
-    {
-        return $this->headers;
-    }
-
-    public function toPrettyJson()
-    {
-        return json_encode($this->data, JSON_PRETTY_PRINT);
-    }
-
-    public function postJson($url, array $data, array $headers = array())
-    {
-        $this->url = $url;
-        $this->data = $data;
-        $this->headers = $headers;
-        return true;
-    }
-
-    public function postForm($url, array $data, array $headers = array())
-    {
-        $this->url = $url;
-        $this->data = $data;
-        $this->headers = $headers;
-        return true;
-    }
-}
+use Kanboard\ServiceProvider\ActionProvider;
 
 abstract class Base extends PHPUnit_Framework_TestCase
 {
@@ -75,11 +33,13 @@ abstract class Base extends PHPUnit_Framework_TestCase
         }
 
         $this->container = new Pimple\Container;
+        $this->container->register(new Kanboard\ServiceProvider\HelperProvider);
         $this->container->register(new Kanboard\ServiceProvider\AuthenticationProvider);
         $this->container->register(new Kanboard\ServiceProvider\DatabaseProvider);
         $this->container->register(new Kanboard\ServiceProvider\ClassProvider);
         $this->container->register(new Kanboard\ServiceProvider\NotificationProvider);
         $this->container->register(new Kanboard\ServiceProvider\RouteProvider);
+        $this->container->register(new Kanboard\ServiceProvider\AvatarProvider);
 
         $this->container['dispatcher'] = new TraceableEventDispatcher(
             new EventDispatcher,
@@ -90,8 +50,18 @@ abstract class Base extends PHPUnit_Framework_TestCase
 
         $this->container['logger'] = new Logger;
         $this->container['logger']->setLogger(new File($this->isWindows() ? 'NUL' : '/dev/null'));
-        $this->container['httpClient'] = new FakeHttpClient;
-        $this->container['emailClient'] = $this->getMockBuilder('EmailClient')->setMethods(array('send'))->getMock();
+
+        $this->container['httpClient'] = $this
+            ->getMockBuilder('\Kanboard\Core\Http\Client')
+            ->setConstructorArgs(array($this->container))
+            ->setMethods(array('get', 'getJson', 'postJson', 'postForm'))
+            ->getMock();
+
+        $this->container['emailClient'] = $this
+            ->getMockBuilder('\Kanboard\Core\Mail\Client')
+            ->setConstructorArgs(array($this->container))
+            ->setMethods(array('send'))
+            ->getMock();
 
         $this->container['userNotificationType'] = $this
             ->getMockBuilder('\Kanboard\Model\UserNotificationType')
@@ -99,9 +69,16 @@ abstract class Base extends PHPUnit_Framework_TestCase
             ->setMethods(array('getType', 'getSelectedTypes'))
             ->getMock();
 
-        $this->container['sessionStorage'] = new SessionStorage;
+        $this->container['objectStorage'] = $this
+            ->getMockBuilder('\Kanboard\Core\ObjectStorage\FileStorage')
+            ->setConstructorArgs(array($this->container))
+            ->setMethods(array('put', 'moveFile', 'remove', 'moveUploadedFile'))
+            ->getMock();
 
-        $this->container['flash'] = function($c) {
+        $this->container['sessionStorage'] = new SessionStorage;
+        $this->container->register(new ActionProvider);
+
+        $this->container['flash'] = function ($c) {
             return new FlashMessage($c);
         };
     }

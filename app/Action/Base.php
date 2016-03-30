@@ -119,13 +119,20 @@ abstract class Base extends \Kanboard\Core\Base
      */
     public function __toString()
     {
-        return $this->getName();
+        $params = array();
+
+        foreach ($this->params as $key => $value) {
+            $params[] = $key.'='.var_export($value, true);
+        }
+
+        return $this->getName().'('.implode('|', $params).')';
     }
 
     /**
      * Set project id
      *
      * @access public
+     * @param  integer $project_id
      * @return Base
      */
     public function setProjectId($project_id)
@@ -148,10 +155,10 @@ abstract class Base extends \Kanboard\Core\Base
     /**
      * Set an user defined parameter
      *
-     * @access public
-     * @param  string  $name    Parameter name
-     * @param  mixed   $value   Value
-     * @param  Base
+     * @access  public
+     * @param   string  $name    Parameter name
+     * @param   mixed   $value   Value
+     * @return  Base
      */
     public function setParam($name, $value)
     {
@@ -246,16 +253,17 @@ abstract class Base extends \Kanboard\Core\Base
         }
 
         $data = $event->getAll();
-        $result = false;
+        $executable = $this->isExecutable($data, $eventName);
+        $executed = false;
 
-        if ($this->isExecutable($data, $eventName)) {
+        if ($executable) {
             $this->called = true;
-            $result = $this->doAction($data);
+            $executed = $this->doAction($data);
         }
 
-        $this->logger->debug('AutomaticAction '.$this->getName().' => '.($result ? 'true' : 'false'));
+        $this->logger->debug($this.' ['.$eventName.'] => executable='.var_export($executable, true).' exec_success='.var_export($executed, true));
 
-        return $result;
+        return $executed;
     }
 
     /**
@@ -264,6 +272,7 @@ abstract class Base extends \Kanboard\Core\Base
      * @access public
      * @param  string $event
      * @param  string $description
+     * @return Base
      */
     public function addEvent($event, $description = '')
     {

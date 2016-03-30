@@ -4,8 +4,8 @@
 
 <div class="listing">
     <ul>
-        <li><?= t('Estimated hours: ').'<strong>'.$this->e($metrics['open']['time_estimated']+$metrics['open']['time_estimated']) ?></strong></li>
-        <li><?= t('Actual hours: ').'<strong>'.$this->e($metrics['open']['time_spent']+$metrics['closed']['time_spent']) ?></strong></li>
+        <li><?= t('Estimated hours: ').'<strong>'.$this->text->e($metrics['open']['time_estimated'] + $metrics['closed']['time_estimated']) ?></strong></li>
+        <li><?= t('Actual hours: ').'<strong>'.$this->text->e($metrics['open']['time_spent'] + $metrics['closed']['time_spent']) ?></strong></li>
     </ul>
 </div>
 
@@ -13,7 +13,12 @@
     <p class="alert"><?= t('Not enough data to show the graph.') ?></p>
 <?php else: ?>
 <section id="analytic-compare-hours">
-    <div id="chart" data-metrics='<?= json_encode($metrics, JSON_HEX_APOS)?>' data-label-spent="<?= t('Hours Spent') ?>" data-label-estimated="<?= t('Hours Estimated') ?>"></div>
+    <div id="chart"
+        data-metrics='<?= json_encode($metrics, JSON_HEX_APOS)?>'
+        data-label-spent="<?= t('Hours Spent') ?>"
+        data-label-estimated="<?= t('Hours Estimated') ?>"
+        data-label-closed="<?= t('Closed') ?>"
+        data-label-open="<?= t('Open') ?>"></div>
 
     <?php if ($paginator->isEmpty()): ?>
         <p class="alert"><?= t('No tasks found.') ?></p>
@@ -29,10 +34,10 @@
             <?php foreach ($paginator->getCollection() as $task): ?>
             <tr>
                 <td class="task-table color-<?= $task['color_id'] ?>">
-                    <?= $this->url->link('#'.$this->e($task['id']), 'task', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id']), false, '', t('View this task')) ?>
+                    <?= $this->url->link('#'.$this->text->e($task['id']), 'task', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id']), false, '', t('View this task')) ?>
                 </td>
                 <td>
-                    <?= $this->url->link($this->e($task['title']), 'task', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id']), false, '', t('View this task')) ?>
+                    <?= $this->url->link($this->text->e($task['title']), 'task', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id']), false, '', t('View this task')) ?>
                 </td>
                 <td>
                     <?php if ($task['is_active'] == \Kanboard\Model\Task::STATUS_OPEN): ?>
@@ -42,10 +47,10 @@
                     <?php endif ?>
                 </td>
                 <td>
-                    <?= $this->e($task['time_estimated']) ?>
+                    <?= $this->text->e($task['time_estimated']) ?>
                 </td>
                 <td>
-                    <?= $this->e($task['time_spent']) ?>
+                    <?= $this->text->e($task['time_spent']) ?>
                 </td>
             </tr>
             <?php endforeach ?>

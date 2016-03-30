@@ -2,6 +2,8 @@
 
 namespace Kanboard\Controller;
 
+use Kanboard\Core\Security\OAuthAuthenticationProviderInterface;
+
 /**
  * OAuth controller
  *
@@ -11,33 +13,69 @@ namespace Kanboard\Controller;
 class Oauth extends Base
 {
     /**
-     * Link or authenticate a Google account
+     * Redirect to the provider if no code received
      *
-     * @access public
+     * @access private
+     * @param string $provider
      */
-    public function google()
+    protected function step1($provider)
     {
-        $this->step1('Google');
+        $code = $this->request->getStringParam('code');
+        $state = $this->request->getStringParam('state');
+
+        if (! empty($code)) {
+            $this->step2($provider, $code, $state);
+        } else {
+            $this->response->redirect($this->authenticationManager->getProvider($provider)->getService()->getAuthorizationUrl());
+        }
     }
 
     /**
-     * Link or authenticate a Github account
+     * Link or authenticate the user
      *
-     * @access public
+     * @access protected
+     * @param string $providerName
+     * @param string $code
+     * @param string $state
      */
-    public function github()
+    protected function step2($providerName, $code, $state)
     {
-        $this->step1('Github');
+        $provider = $this->authenticationManager->getProvider($providerName);
+        $provider->setCode($code);
+        $hasValidState = $provider->getService()->isValidateState($state);
+
+        if ($this->userSession->isLogged()) {
+            if ($hasValidState) {
+                $this->link($provider);
+            } else {
+                $this->flash->failure(t('The OAuth2 state parameter is invalid'));
+                $this->response->redirect($this->helper->url->to('user', 'external', array('user_id' => $this->userSession->getId())));
+            }
+        } else {
+            if ($hasValidState) {
+                $this->authenticate($providerName);
+            } else {
+                $this->authenticationFailure(t('The OAuth2 state parameter is invalid'));
+            }
+        }
     }
 
     /**
-     * Link or authenticate a Gitlab account
+     * Link the account
      *
-     * @access public
+     * @access protected
+     * @param  OAuthAuthenticationProviderInterface $provider
      */
-    public function gitlab()
+    protected function link(OAuthAuthenticationProviderInterface $provider)
     {
-        $this->step1('Gitlab');
+        if (! $provider->authenticate()) {
+            $this->flash->failure(t('External authentication failed'));
+        } else {
+            $this->userProfile->assign($this->userSession->getId(), $provider->getUser());
+            $this->flash->success(t('Your external account is linked to your profile successfully.'));
+        }
+
+        $this->response->redirect($this->helper->url->to('user', 'external', array('user_id' => $this->userSession->getId())));
     }
 
     /**
@@ -60,77 +98,33 @@ class Oauth extends Base
     }
 
     /**
-     * Redirect to the provider if no code received
-     *
-     * @access private
-     * @param string $provider
-     */
-    private function step1($provider)
-    {
-        $code = $this->request->getStringParam('code');
-
-        if (! empty($code)) {
-            $this->step2($provider, $code);
-        } else {
-            $this->response->redirect($this->authenticationManager->getProvider($provider)->getService()->getAuthorizationUrl());
-        }
-    }
-
-    /**
-     * Link or authenticate the user
-     *
-     * @access private
-     * @param string $provider
-     * @param string $code
-     */
-    private function step2($provider, $code)
-    {
-        $this->authenticationManager->getProvider($provider)->setCode($code);
-
-        if ($this->userSession->isLogged()) {
-            $this->link($provider);
-        }
-
-        $this->authenticate($provider);
-    }
-
-    /**
-     * Link the account
-     *
-     * @access private
-     * @param string $provider
-     */
-    private function link($provider)
-    {
-        $authProvider = $this->authenticationManager->getProvider($provider);
-
-        if (! $authProvider->authenticate()) {
-            $this->flash->failure(t('External authentication failed'));
-        } else {
-            $this->userProfile->assign($this->userSession->getId(), $authProvider->getUser());
-            $this->flash->success(t('Your external account is linked to your profile successfully.'));
-        }
-
-        $this->response->redirect($this->helper->url->to('user', 'external', array('user_id' => $this->userSession->getId())));
-    }
-
-    /**
      * Authenticate the account
      *
-     * @access private
-     * @param string $provider
+     * @access protected
+     * @param string $providerName
      */
-    private function authenticate($provider)
+    protected function authenticate($providerName)
     {
-        if ($this->authenticationManager->oauthAuthentication($provider)) {
+        if ($this->authenticationManager->oauthAuthentication($providerName)) {
             $this->response->redirect($this->helper->url->to('app', 'index'));
         } else {
-            $this->response->html($this->template->layout('auth/index', array(
-                'errors' => array('login' => t('External authentication failed')),
-                'values' => array(),
-                'no_layout' => true,
-                'title' => t('Login')
-            )));
+            $this->authenticationFailure(t('External authentication failed'));
         }
+    }
+
+    /**
+     * Show login failure page
+     *
+     * @access protected
+     * @param  string $message
+     */
+    protected function authenticationFailure($message)
+    {
+        $this->response->html($this->helper->layout->app('auth/index', array(
+            'errors' => array('login' => $message),
+            'values' => array(),
+            'no_layout' => true,
+            'title' => t('Login')
+        )));
     }
 }

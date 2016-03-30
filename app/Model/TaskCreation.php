@@ -49,13 +49,14 @@ class TaskCreation extends Base
      */
     public function prepare(array &$values)
     {
-        $this->dateParser->convert($values, array('date_due'));
-        $this->dateParser->convert($values, array('date_started'), true);
-        $this->removeFields($values, array('another_task'));
-        $this->resetFields($values, array('date_started', 'creator_id', 'owner_id', 'swimlane_id', 'date_due', 'score', 'category_id', 'time_estimated'));
+        $values = $this->dateParser->convert($values, array('date_due'));
+        $values = $this->dateParser->convert($values, array('date_started'), true);
+
+        $this->helper->model->removeFields($values, array('another_task'));
+        $this->helper->model->resetFields($values, array('date_started', 'creator_id', 'owner_id', 'swimlane_id', 'date_due', 'score', 'category_id', 'time_estimated'));
 
         if (empty($values['column_id'])) {
-            $values['column_id'] = $this->board->getFirstColumn($values['project_id']);
+            $values['column_id'] = $this->column->getFirstColumnId($values['project_id']);
         }
 
         if (empty($values['color_id'])) {
@@ -87,6 +88,9 @@ class TaskCreation extends Base
     private function fireEvents($task_id, array $values)
     {
         $event = new TaskEvent(array('task_id' => $task_id) + $values);
+
+        $this->logger->debug('Event fired: '.Task::EVENT_CREATE_UPDATE);
+        $this->logger->debug('Event fired: '.Task::EVENT_CREATE);
 
         $this->dispatcher->dispatch(Task::EVENT_CREATE_UPDATE, $event);
         $this->dispatcher->dispatch(Task::EVENT_CREATE, $event);

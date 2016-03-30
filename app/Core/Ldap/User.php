@@ -17,10 +17,10 @@ class User
     /**
      * Query
      *
-     * @access private
+     * @access protected
      * @var Query
      */
-    private $query;
+    protected $query;
 
     /**
      * Constructor
@@ -40,11 +40,11 @@ class User
      * @access public
      * @param  Client    $client
      * @param  string    $username
-     * @return array
+     * @return LdapUserProvider
      */
     public static function getUser(Client $client, $username)
     {
-        $self = new self(new Query($client));
+        $self = new static(new Query($client));
         return $self->find($self->getLdapUserPattern($username));
     }
 
@@ -210,14 +210,15 @@ class User
      *
      * @access public
      * @param  string  $username
+     * @param  string  $filter
      * @return string
      */
-    public function getLdapUserPattern($username)
+    public function getLdapUserPattern($username, $filter = LDAP_USER_FILTER)
     {
-        if (! LDAP_USER_FILTER) {
+        if (! $filter) {
             throw new LogicException('LDAP user filter empty, check the parameter LDAP_USER_FILTER');
         }
 
-        return sprintf(LDAP_USER_FILTER, $username);
+        return str_replace('%s', $username, $filter);
     }
 }

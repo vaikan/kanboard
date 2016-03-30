@@ -14,28 +14,34 @@ use Kanboard\Core\Http\Client as HttpClient;
 class ClassProvider implements ServiceProviderInterface
 {
     private $classes = array(
+        'Analytic' => array(
+            'TaskDistributionAnalytic',
+            'UserDistributionAnalytic',
+            'EstimatedTimeComparisonAnalytic',
+            'AverageLeadCycleTimeAnalytic',
+            'AverageTimeSpentColumnAnalytic',
+        ),
         'Model' => array(
             'Action',
             'ActionParameter',
-            'Authentication',
+            'AvatarFile',
             'Board',
             'Category',
             'Color',
+            'Column',
             'Comment',
             'Config',
             'Currency',
             'CustomFilter',
-            'File',
             'Group',
             'GroupMember',
             'LastLogin',
             'Link',
             'Notification',
-            'OverdueNotification',
             'PasswordReset',
             'Project',
+            'ProjectFile',
             'ProjectActivity',
-            'ProjectAnalytic',
             'ProjectDuplication',
             'ProjectDailyColumnStats',
             'ProjectDailyStats',
@@ -48,26 +54,24 @@ class ClassProvider implements ServiceProviderInterface
             'ProjectUserRoleFilter',
             'RememberMeSession',
             'Subtask',
-            'SubtaskExport',
             'SubtaskTimeTracking',
             'Swimlane',
             'Task',
             'TaskAnalytic',
             'TaskCreation',
             'TaskDuplication',
-            'TaskExport',
+            'TaskExternalLink',
             'TaskFinder',
+            'TaskFile',
             'TaskFilter',
             'TaskLink',
             'TaskModification',
             'TaskPermission',
             'TaskPosition',
             'TaskStatus',
-            'TaskImport',
             'TaskMetadata',
             'Transition',
             'User',
-            'UserImport',
             'UserLocking',
             'UserMention',
             'UserNotification',
@@ -85,6 +89,16 @@ class ClassProvider implements ServiceProviderInterface
             'GroupAutoCompleteFormatter',
         ),
         'Validator' => array(
+            'ActionValidator',
+            'AuthValidator',
+            'CategoryValidator',
+            'ColumnValidator',
+            'CommentValidator',
+            'CurrencyValidator',
+            'CustomFilterValidator',
+            'ExternalLinkValidator',
+            'GroupValidator',
+            'LinkValidator',
             'PasswordResetValidator',
             'ProjectValidator',
             'SubtaskValidator',
@@ -93,11 +107,18 @@ class ClassProvider implements ServiceProviderInterface
             'TaskLinkValidator',
             'UserValidator',
         ),
+        'Import' => array(
+            'TaskImport',
+            'UserImport',
+        ),
+        'Export' => array(
+            'SubtaskExport',
+            'TaskExport',
+            'TransitionExport',
+        ),
         'Core' => array(
             'DateParser',
-            'Helper',
             'Lexer',
-            'Template',
         ),
         'Core\Event' => array(
             'EventManager',
@@ -153,7 +174,11 @@ class ClassProvider implements ServiceProviderInterface
             return $mailer;
         };
 
-        $container['cspRules'] = array('style-src' => "'self' 'unsafe-inline'", 'img-src' => '* data:');
+        $container['cspRules'] = array(
+            'default-src' => "'self'",
+            'style-src' => "'self' 'unsafe-inline'",
+            'img-src' => '* data:',
+        );
 
         return $container;
     }

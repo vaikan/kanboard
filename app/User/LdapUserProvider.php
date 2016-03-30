@@ -15,50 +15,50 @@ class LdapUserProvider implements UserProviderInterface
     /**
      * LDAP DN
      *
-     * @access private
+     * @access protected
      * @var string
      */
-    private $dn;
+    protected $dn;
 
     /**
      * LDAP username
      *
-     * @access private
+     * @access protected
      * @var string
      */
-    private $username;
+    protected $username;
 
     /**
      * User name
      *
-     * @access private
+     * @access protected
      * @var string
      */
-    private $name;
+    protected $name;
 
     /**
      * Email
      *
-     * @access private
+     * @access protected
      * @var string
      */
-    private $email;
+    protected $email;
 
     /**
      * User role
      *
-     * @access private
+     * @access protected
      * @var string
      */
-    private $role;
+    protected $role;
 
     /**
      * Group LDAP DNs
      *
-     * @access private
+     * @access protected
      * @var string[]
      */
-    private $groupIds;
+    protected $groupIds;
 
     /**
      * Constructor
@@ -69,7 +69,7 @@ class LdapUserProvider implements UserProviderInterface
      * @param  string   $name
      * @param  string   $email
      * @param  string   $role
-     * @param  string[]
+     * @param  string[] $groupIds
      */
     public function __construct($dn, $username, $name, $email, $role, array $groupIds)
     {

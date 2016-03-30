@@ -1,10 +1,6 @@
 <section id="main">
     <div class="page-header">
         <ul>
-            <?php if ($this->user->hasAccess('project', 'create')): ?>
-                <li><i class="fa fa-plus fa-fw"></i><?= $this->url->link(t('New project'), 'project', 'create') ?></li>
-            <?php endif ?>
-            <li><i class="fa fa-lock fa-fw"></i><?= $this->url->link(t('New private project'), 'project', 'createPrivate') ?></li>
             <?php if ($this->user->hasAccess('projectuser', 'managers')): ?>
                 <li><i class="fa fa-user fa-fw"></i><?= $this->url->link(t('Users overview'), 'projectuser', 'managers') ?></li>
             <?php endif ?>
@@ -23,9 +19,9 @@
                 <th class="column-15"><?= $paginator->order(t('Project'), 'name') ?></th>
                 <th class="column-8"><?= $paginator->order(t('Start date'), 'start_date') ?></th>
                 <th class="column-8"><?= $paginator->order(t('End date'), 'end_date') ?></th>
+                <th class="column-15"><?= $paginator->order(t('Owner'), 'owner_id') ?></th>
                 <?php if ($this->user->hasAccess('projectuser', 'managers')): ?>
-                    <th class="column-12"><?= t('Managers') ?></th>
-                    <th class="column-12"><?= t('Members') ?></th>
+                    <th class="column-10"><?= t('Users') ?></th>
                 <?php endif ?>
                 <th><?= t('Columns') ?></th>
             </tr>
@@ -53,35 +49,34 @@
                     <?php endif ?>
 
                     <?php if (! empty($project['description'])): ?>
-                        <span class="tooltip" title='<?= $this->e($this->text->markdown($project['description'])) ?>'>
+                        <span class="tooltip" title='<?= $this->text->e($this->text->markdown($project['description'])) ?>'>
                             <i class="fa fa-info-circle"></i>
                         </span>
                     <?php endif ?>
 
-                    <?= $this->url->link($this->e($project['name']), 'project', 'show', array('project_id' => $project['id'])) ?>
+                    <?= $this->url->link($this->text->e($project['name']), 'project', 'show', array('project_id' => $project['id'])) ?>
                 </td>
                 <td>
-                    <?= $project['start_date'] ?>
+                    <?= $this->dt->date($project['start_date']) ?>
                 </td>
                 <td>
-                    <?= $project['end_date'] ?>
+                    <?= $this->dt->date($project['end_date']) ?>
+                </td>
+                <td>
+                    <?php if ($project['owner_id'] > 0): ?>
+                        <?= $this->text->e($project['owner_name'] ?: $project['owner_username']) ?>
+                    <?php endif ?>
                 </td>
                 <?php if ($this->user->hasAccess('projectuser', 'managers')): ?>
                     <td>
-                        <?= $this->render('project/roles', array('roles' => $project, 'role' => \Kanboard\Core\Security\Role::PROJECT_MANAGER)) ?>
-                    </td>
-                    <td>
-                        <?php if ($project['is_everybody_allowed'] == 1): ?>
-                            <?= t('Everybody') ?>
-                        <?php else: ?>
-                            <?= $this->render('project/roles', array('roles' => $project, 'role' => \Kanboard\Core\Security\Role::PROJECT_MEMBER)) ?>
-                        <?php endif ?>
+                        <i class="fa fa-users fa-fw"></i>
+                        <a href="#" class="tooltip" title="<?= t('Members') ?>" data-href="<?= $this->url->href('Projectuser', 'users', array('project_id' => $project['id'])) ?>"><?= t('Members') ?></a>
                     </td>
                 <?php endif ?>
                 <td class="dashboard-project-stats">
                     <?php foreach ($project['columns'] as $column): ?>
                         <strong title="<?= t('Task count') ?>"><?= $column['nb_tasks'] ?></strong>
-                        <span><?= $this->e($column['title']) ?></span>
+                        <span><?= $this->text->e($column['title']) ?></span>
                     <?php endforeach ?>
                 </td>
             </tr>

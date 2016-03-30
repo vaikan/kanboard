@@ -23,10 +23,9 @@ class Gantt extends Base
             $project_ids = $this->projectPermission->getActiveProjectIds($this->userSession->getId());
         }
 
-        $this->response->html($this->template->layout('gantt/projects', array(
+        $this->response->html($this->helper->layout->app('gantt/projects', array(
             'projects' => $this->projectGanttFormatter->filter($project_ids)->format(),
             'title' => t('Gantt chart for all projects'),
-            'board_selector' => $this->projectUserRole->getActiveProjectsByUser($this->userSession->getId()),
         )));
     }
 
@@ -55,8 +54,9 @@ class Gantt extends Base
      */
     public function project()
     {
-        $params = $this->getProjectFilters('gantt', 'project');
-        $filter = $this->taskFilterGanttFormatter->search($params['filters']['search'])->filterByProject($params['project']['id']);
+        $project = $this->getProject();
+        $search = $this->helper->projectHeader->getSearchQuery($project);
+        $filter = $this->taskFilterGanttFormatter->search($search)->filterByProject($project['id']);
         $sorting = $this->request->getStringParam('sorting', 'board');
 
         if ($sorting === 'date') {
@@ -65,8 +65,10 @@ class Gantt extends Base
             $filter->getQuery()->asc('column_position')->asc(TaskModel::TABLE.'.position');
         }
 
-        $this->response->html($this->template->layout('gantt/project', $params + array(
-            'users_list' => $this->projectUserRole->getAssignableUsersList($params['project']['id'], false),
+        $this->response->html($this->helper->layout->app('gantt/project', array(
+            'project' => $project,
+            'title' => $project['name'],
+            'description' => $this->helper->projectHeader->getDescription($project),
             'sorting' => $sorting,
             'tasks' => $filter->format(),
         )));
@@ -102,19 +104,23 @@ class Gantt extends Base
     {
         $project = $this->getProject();
 
+        $values = $values + array(
+            'project_id' => $project['id'],
+            'column_id' => $this->column->getFirstColumnId($project['id']),
+            'position' => 1
+        );
+
+        $values = $this->hook->merge('controller:task:form:default', $values, array('default_values' => $values));
+        $values = $this->hook->merge('controller:gantt:task:form:default', $values, array('default_values' => $values));
+
         $this->response->html($this->template->render('gantt/task_creation', array(
+            'project' => $project,
             'errors' => $errors,
-            'values' => $values + array(
-                'project_id' => $project['id'],
-                'column_id' => $this->board->getFirstColumn($project['id']),
-                'position' => 1
-            ),
+            'values' => $values,
             'users_list' => $this->projectUserRole->getAssignableUsersList($project['id'], true, false, true),
             'colors_list' => $this->color->getList(),
             'categories_list' => $this->category->getList($project['id']),
             'swimlanes_list' => $this->swimlane->getList($project['id'], false, true),
-            'date_format' => $this->config->get('application_date_format'),
-            'date_formats' => $this->dateParser->getAvailableFormats(),
             'title' => $project['name'].' &gt; '.t('New task')
         )));
     }

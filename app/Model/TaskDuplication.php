@@ -64,7 +64,7 @@ class TaskDuplication extends Base
 
         if ($values['recurrence_status'] == Task::RECURRING_STATUS_PENDING) {
             $values['recurrence_parent'] = $task_id;
-            $values['column_id'] = $this->board->getFirstColumn($values['project_id']);
+            $values['column_id'] = $this->column->getFirstColumnId($values['project_id']);
             $this->calculateRecurringTaskDueDate($values);
 
             $recurring_task_id = $this->save($task_id, $values);
@@ -155,6 +155,7 @@ class TaskDuplication extends Base
      *
      * @access public
      * @param  array      $values
+     * @return array
      */
     public function checkDestinationProjectValues(array &$values)
     {
@@ -181,12 +182,12 @@ class TaskDuplication extends Base
 
         // Check if the column exists for the destination project
         if ($values['column_id'] > 0) {
-            $values['column_id'] = $this->board->getColumnIdByTitle(
+            $values['column_id'] = $this->column->getColumnIdByTitle(
                 $values['project_id'],
-                $this->board->getColumnTitleById($values['column_id'])
+                $this->column->getColumnTitleById($values['column_id'])
             );
 
-            $values['column_id'] = $values['column_id'] ?: $this->board->getFirstColumn($values['project_id']);
+            $values['column_id'] = $values['column_id'] ?: $this->column->getFirstColumnId($values['project_id']);
         }
 
         return $values;

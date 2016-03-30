@@ -41,6 +41,18 @@ class User extends Base
     }
 
     /**
+     * Return true if the user is active
+     *
+     * @access public
+     * @param  integer    $user_id   User id
+     * @return boolean
+     */
+    public function isActive($user_id)
+    {
+        return $this->db->table(self::TABLE)->eq('id', $user_id)->eq('is_active', 1)->exists();
+    }
+
+    /**
      * Get query to fetch all users
      *
      * @access public
@@ -48,20 +60,7 @@ class User extends Base
      */
     public function getQuery()
     {
-        return $this->db
-                    ->table(self::TABLE)
-                    ->columns(
-                        'id',
-                        'username',
-                        'name',
-                        'email',
-                        'role',
-                        'is_ldap_user',
-                        'notifications_enabled',
-                        'google_id',
-                        'github_id',
-                        'twofactor_activated'
-                    );
+        return $this->db->table(self::TABLE);
     }
 
     /**
@@ -138,7 +137,7 @@ class User extends Base
      *
      * @access public
      * @param  string  $username  Username
-     * @return array
+     * @return integer
      */
     public function getIdByUsername($username)
     {
@@ -206,9 +205,9 @@ class User extends Base
      * @param  boolean  $prepend  Prepend "All users"
      * @return array
      */
-    public function getList($prepend = false)
+    public function getActiveUsersList($prepend = false)
     {
-        $users = $this->db->table(self::TABLE)->columns('id', 'username', 'name')->findAll();
+        $users = $this->db->table(self::TABLE)->eq('is_active', 1)->columns('id', 'username', 'name')->findAll();
         $listing = $this->prepareList($users);
 
         if ($prepend) {
@@ -254,10 +253,10 @@ class User extends Base
             }
         }
 
-        $this->removeFields($values, array('confirmation', 'current_password'));
-        $this->resetFields($values, array('is_ldap_user', 'disable_login_form'));
-        $this->convertNullFields($values, array('gitlab_id'));
-        $this->convertIntegerFields($values, array('gitlab_id'));
+        $this->helper->model->removeFields($values, array('confirmation', 'current_password'));
+        $this->helper->model->resetFields($values, array('is_ldap_user', 'disable_login_form'));
+        $this->helper->model->convertNullFields($values, array('gitlab_id'));
+        $this->helper->model->convertIntegerFields($values, array('gitlab_id'));
     }
 
     /**
@@ -278,19 +277,38 @@ class User extends Base
      *
      * @access public
      * @param  array  $values  Form values
-     * @return array
+     * @return boolean
      */
     public function update(array $values)
     {
         $this->prepare($values);
         $result = $this->db->table(self::TABLE)->eq('id', $values['id'])->update($values);
-
-        // If the user is connected refresh his session
-        if ($this->userSession->getId() == $values['id']) {
-            $this->userSession->initialize($this->getById($this->userSession->getId()));
-        }
-
+        $this->userSession->refresh($values['id']);
         return $result;
+    }
+
+    /**
+     * Disable a specific user
+     *
+     * @access public
+     * @param  integer  $user_id
+     * @return boolean
+     */
+    public function disable($user_id)
+    {
+        return $this->db->table(self::TABLE)->eq('id', $user_id)->update(array('is_active' => 0));
+    }
+
+    /**
+     * Enable a specific user
+     *
+     * @access public
+     * @param  integer  $user_id
+     * @return boolean
+     */
+    public function enable($user_id)
+    {
+        return $this->db->table(self::TABLE)->eq('id', $user_id)->update(array('is_active' => 1));
     }
 
     /**
@@ -302,6 +320,8 @@ class User extends Base
      */
     public function remove($user_id)
     {
+        $this->avatarFile->remove($user_id);
+
         return $this->db->transaction(function (Database $db) use ($user_id) {
 
             // All assigned tasks are now unassigned (no foreign key)

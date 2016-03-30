@@ -12,7 +12,7 @@
     <?php foreach ($rates as $rate): ?>
     <tr>
         <td>
-            <strong><?= $this->e($rate['currency']) ?></strong>
+            <strong><?= $this->text->e($rate['currency']) ?></strong>
         </td>
         <td>
             <?= n($rate['rate']) ?>
@@ -29,10 +29,10 @@
     <?= $this->form->csrf() ?>
 
     <?= $this->form->label(t('Reference currency'), 'application_currency') ?>
-    <?= $this->form->select('application_currency', $currencies, $config_values, $errors) ?><br/>
+    <?= $this->form->select('application_currency', $currencies, $config_values, $errors) ?>
 
     <div class="form-actions">
-        <input type="submit" value="<?= t('Save') ?>" class="btn btn-blue"/>
+        <button type="submit" class="btn btn-blue"><?= t('Save') ?></button>
     </div>
 </form>
 
@@ -43,12 +43,12 @@
     <?= $this->form->csrf() ?>
 
     <?= $this->form->label(t('Currency'), 'currency') ?>
-    <?= $this->form->select('currency', $currencies, $values, $errors) ?><br/>
+    <?= $this->form->select('currency', $currencies, $values, $errors) ?>
 
     <?= $this->form->label(t('Rate'), 'rate') ?>
-    <?= $this->form->text('rate', $values, $errors, array(), 'form-numeric') ?><br/>
+    <?= $this->form->text('rate', $values, $errors, array(), 'form-numeric') ?>
 
     <div class="form-actions">
-        <input type="submit" value="<?= t('Save') ?>" class="btn btn-blue"/>
+        <button type="submit" class="btn btn-blue"><?= t('Save') ?></button>
     </div>
 </form>

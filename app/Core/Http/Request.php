@@ -29,7 +29,12 @@ class Request extends Base
      * Constructor
      *
      * @access public
-     * @param  \Pimple\Container   $container
+     * @param \Pimple\Container $container
+     * @param array $server
+     * @param array $get
+     * @param array $post
+     * @param array $files
+     * @param array $cookies
      */
     public function __construct(Container $container, array $server = array(), array $get = array(), array $post = array(), array $files = array(), array $cookies = array())
     {
@@ -157,6 +162,18 @@ class Request extends Base
     }
 
     /**
+     * Get info of an uploaded file
+     *
+     * @access public
+     * @param  string   $name   Form file name
+     * @return array
+     */
+    public function getFileInfo($name)
+    {
+        return isset($this->files[$name]) ? $this->files[$name] : array();
+    }
+
+    /**
      * Return HTTP method
      *
      * @access public
@@ -199,7 +216,11 @@ class Request extends Base
      */
     public function isHTTPS()
     {
-        return isset($this->server['HTTPS']) && $this->server['HTTPS'] !== '' && $this->server['HTTPS'] !== 'off';
+        if ($this->getServerVariable('HTTP_X_FORWARDED_PROTO') === 'https') {
+            return true;
+        }
+
+        return $this->getServerVariable('HTTPS') !== '' && $this->server['HTTPS'] !== 'off';
     }
 
     /**

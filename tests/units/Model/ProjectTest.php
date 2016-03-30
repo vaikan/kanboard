@@ -8,8 +8,6 @@ use Kanboard\Model\Project;
 use Kanboard\Model\User;
 use Kanboard\Model\Task;
 use Kanboard\Model\TaskCreation;
-use Kanboard\Model\Acl;
-use Kanboard\Model\Board;
 use Kanboard\Model\Config;
 use Kanboard\Model\Category;
 
@@ -86,6 +84,7 @@ class ProjectTest extends Base
         // Single category
 
         $this->assertTrue($c->save(array('project_categories' => 'Test1')));
+        $this->container['memoryCache']->flush();
         $this->assertEquals(2, $p->create(array('name' => 'UnitTest2')));
 
         $project = $p->getById(2);
@@ -99,6 +98,7 @@ class ProjectTest extends Base
         // Multiple categories badly formatted
 
         $this->assertTrue($c->save(array('project_categories' => 'ABC, , DEF 3,  ')));
+        $this->container['memoryCache']->flush();
         $this->assertEquals(3, $p->create(array('name' => 'UnitTest3')));
 
         $project = $p->getById(3);
@@ -112,6 +112,7 @@ class ProjectTest extends Base
 
         // No default categories
         $this->assertTrue($c->save(array('project_categories' => '  ')));
+        $this->container['memoryCache']->flush();
         $this->assertEquals(4, $p->create(array('name' => 'UnitTest4')));
 
         $project = $p->getById(4);
@@ -277,5 +278,49 @@ class ProjectTest extends Base
 
         $project = $p->getByIdentifier('');
         $this->assertFalse($project);
+    }
+
+    public function testThatProjectCreatorAreAlsoOwner()
+    {
+        $projectModel = new Project($this->container);
+        $userModel = new User($this->container);
+
+        $this->assertEquals(2, $userModel->create(array('username' => 'user1', 'name' => 'Me')));
+        $this->assertEquals(1, $projectModel->create(array('name' => 'My project 1'), 2));
+        $this->assertEquals(2, $projectModel->create(array('name' => 'My project 2')));
+
+        $project = $projectModel->getByIdWithOwner(1);
+        $this->assertNotEmpty($project);
+        $this->assertSame('My project 1', $project['name']);
+        $this->assertSame('Me', $project['owner_name']);
+        $this->assertSame('user1', $project['owner_username']);
+        $this->assertEquals(2, $project['owner_id']);
+
+        $project = $projectModel->getByIdWithOwner(2);
+        $this->assertNotEmpty($project);
+        $this->assertSame('My project 2', $project['name']);
+        $this->assertEquals('', $project['owner_name']);
+        $this->assertEquals('', $project['owner_username']);
+        $this->assertEquals(0, $project['owner_id']);
+    }
+
+    public function testPriority()
+    {
+        $projectModel = new Project($this->container);
+        $this->assertEquals(1, $projectModel->create(array('name' => 'My project 2')));
+
+        $project = $projectModel->getById(1);
+        $this->assertNotEmpty($project);
+        $this->assertEquals(0, $project['priority_default']);
+        $this->assertEquals(0, $project['priority_start']);
+        $this->assertEquals(3, $project['priority_end']);
+
+        $this->assertTrue($projectModel->update(array('id' => 1, 'priority_start' => 2, 'priority_end' => 5, 'priority_default' => 4)));
+
+        $project = $projectModel->getById(1);
+        $this->assertNotEmpty($project);
+        $this->assertEquals(4, $project['priority_default']);
+        $this->assertEquals(2, $project['priority_start']);
+        $this->assertEquals(5, $project['priority_end']);
     }
 }

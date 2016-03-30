@@ -19,18 +19,22 @@ class Listing extends Base
      */
     public function show()
     {
-        $params = $this->getProjectFilters('listing', 'show');
-        $query = $this->taskFilter->search($params['filters']['search'])->filterByProject($params['project']['id'])->getQuery();
+        $project = $this->getProject();
+        $search = $this->helper->projectHeader->getSearchQuery($project);
+        $query = $this->taskFilter->search($search)->filterByProject($project['id'])->getQuery();
 
         $paginator = $this->paginator
-            ->setUrl('listing', 'show', array('project_id' => $params['project']['id']))
+            ->setUrl('listing', 'show', array('project_id' => $project['id']))
             ->setMax(30)
             ->setOrder(TaskModel::TABLE.'.id')
             ->setDirection('DESC')
             ->setQuery($query)
             ->calculate();
 
-        $this->response->html($this->template->layout('listing/show', $params + array(
+        $this->response->html($this->helper->layout->app('listing/show', array(
+            'project' => $project,
+            'title' => $project['name'],
+            'description' => $this->helper->projectHeader->getDescription($project),
             'paginator' => $paginator,
         )));
     }

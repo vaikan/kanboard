@@ -3,13 +3,36 @@
 namespace Kanboard\Core;
 
 /**
- * Template class
+ * Template
  *
  * @package core
  * @author  Frederic Guillot
+ *
+ * @property \Kanboard\Helper\AppHelper               $app
+ * @property \Kanboard\Helper\AssetHelper             $asset
+ * @property \Kanboard\Helper\DateHelper              $dt
+ * @property \Kanboard\Helper\FileHelper              $file
+ * @property \Kanboard\Helper\FormHelper              $form
+ * @property \Kanboard\Helper\HookHelper              $hook
+ * @property \Kanboard\Helper\ModelHelper             $model
+ * @property \Kanboard\Helper\SubtaskHelper           $subtask
+ * @property \Kanboard\Helper\TaskHelper              $task
+ * @property \Kanboard\Helper\TextHelper              $text
+ * @property \Kanboard\Helper\UrlHelper               $url
+ * @property \Kanboard\Helper\UserHelper              $user
+ * @property \Kanboard\Helper\LayoutHelper            $layout
+ * @property \Kanboard\Helper\ProjectHeaderHelper     $projectHeader
  */
-class Template extends Helper
+class Template
 {
+    /**
+     * Helper object
+     *
+     * @access private
+     * @var Helper
+     */
+    private $helper;
+
     /**
      * List of template overrides
      *
@@ -17,6 +40,29 @@ class Template extends Helper
      * @var array
      */
     private $overrides = array();
+
+    /**
+     * Template constructor
+     *
+     * @access public
+     * @param  Helper $helper
+     */
+    public function __construct(Helper $helper)
+    {
+        $this->helper = $helper;
+    }
+
+    /**
+     * Expose helpers with magic getter
+     *
+     * @access public
+     * @param  string $helper
+     * @return mixed
+     */
+    public function __get($helper)
+    {
+        return $this->helper->getHelper($helper);
+    }
 
     /**
      * Render a template
@@ -33,27 +79,9 @@ class Template extends Helper
     public function render($__template_name, array $__template_args = array())
     {
         extract($__template_args);
-
         ob_start();
         include $this->getTemplateFile($__template_name);
         return ob_get_clean();
-    }
-
-    /**
-     * Render a page layout
-     *
-     * @access public
-     * @param  string   $template_name   Template name
-     * @param  array    $template_args   Key/value map
-     * @param  string   $layout_name     Layout name
-     * @return string
-     */
-    public function layout($template_name, array $template_args = array(), $layout_name = 'layout')
-    {
-        return $this->render(
-            $layout_name,
-            $template_args + array('content_for_layout' => $this->render($template_name, $template_args))
-        );
     }
 
     /**
@@ -71,25 +99,26 @@ class Template extends Helper
     /**
      * Find template filename
      *
-     * Core template name: 'task/show'
-     * Plugin template name: 'myplugin:task/show'
+     * Core template: 'task/show' or 'kanboard:task/show'
+     * Plugin template: 'myplugin:task/show'
      *
      * @access public
-     * @param  string  $template_name
+     * @param  string  $template
      * @return string
      */
-    public function getTemplateFile($template_name)
+    public function getTemplateFile($template)
     {
-        $template_name = isset($this->overrides[$template_name]) ? $this->overrides[$template_name] : $template_name;
+        $plugin = '';
+        $template = isset($this->overrides[$template]) ? $this->overrides[$template] : $template;
 
-        if (strpos($template_name, ':') !== false) {
-            list($plugin, $template) = explode(':', $template_name);
-            $path = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'plugins';
-            $path .= DIRECTORY_SEPARATOR.ucfirst($plugin).DIRECTORY_SEPARATOR.'Template'.DIRECTORY_SEPARATOR.$template.'.php';
-        } else {
-            $path = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Template'.DIRECTORY_SEPARATOR.$template_name.'.php';
+        if (strpos($template, ':') !== false) {
+            list($plugin, $template) = explode(':', $template);
         }
 
-        return $path;
+        if ($plugin !== 'kanboard' && $plugin !== '') {
+            return implode(DIRECTORY_SEPARATOR, array(__DIR__, '..', '..', 'plugins', ucfirst($plugin), 'Template', $template.'.php'));
+        }
+
+        return implode(DIRECTORY_SEPARATOR, array(__DIR__, '..', 'Template', $template.'.php'));
     }
 }
