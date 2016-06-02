@@ -2,21 +2,21 @@
 
 require_once __DIR__.'/../Base.php';
 
-use Kanboard\Model\Project;
-use Kanboard\Model\User;
-use Kanboard\Model\Group;
-use Kanboard\Model\GroupMember;
-use Kanboard\Model\ProjectGroupRole;
-use Kanboard\Model\ProjectUserRole;
-use Kanboard\Model\ProjectPermission;
+use Kanboard\Model\ProjectModel;
+use Kanboard\Model\UserModel;
+use Kanboard\Model\GroupModel;
+use Kanboard\Model\GroupMemberModel;
+use Kanboard\Model\ProjectGroupRoleModel;
+use Kanboard\Model\ProjectUserRoleModel;
+use Kanboard\Model\ProjectPermissionModel;
 use Kanboard\Core\Security\Role;
 
 class ProjectUserRoleTest extends Base
 {
     public function testAddUser()
     {
-        $projectModel = new Project($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
 
@@ -33,8 +33,8 @@ class ProjectUserRoleTest extends Base
 
     public function testRemoveUser()
     {
-        $projectModel = new Project($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
 
@@ -47,8 +47,8 @@ class ProjectUserRoleTest extends Base
 
     public function testChangeRole()
     {
-        $projectModel = new Project($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
 
@@ -65,8 +65,8 @@ class ProjectUserRoleTest extends Base
 
     public function testGetRole()
     {
-        $projectModel = new Project($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
         $this->assertEmpty($userRoleModel->getUserRole(1, 1));
@@ -85,11 +85,11 @@ class ProjectUserRoleTest extends Base
 
     public function testGetRoleWithGroups()
     {
-        $projectModel = new Project($this->container);
-        $groupModel = new Group($this->container);
-        $groupRoleModel = new ProjectGroupRole($this->container);
-        $groupMemberModel = new GroupMember($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $groupModel = new GroupModel($this->container);
+        $groupRoleModel = new ProjectGroupRoleModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
         $this->assertEquals(1, $groupModel->create('Group A'));
@@ -101,11 +101,31 @@ class ProjectUserRoleTest extends Base
         $this->assertEquals('', $userRoleModel->getUserRole(1, 2));
     }
 
+    public function testGetRoleWithPublicProject()
+    {
+        $projectModel = new ProjectModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
+        $userModel = new UserModel($this->container);
+
+        $this->assertEquals(2, $userModel->create(array('username' => 'user1', 'name' => 'User1')));
+        $this->assertEquals(3, $userModel->create(array('username' => 'user2', 'name' => 'User2')));
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'Test'), 2, true));
+
+        $this->assertEquals(Role::PROJECT_MANAGER, $userRoleModel->getUserRole(1, 2));
+        $this->assertEquals(null, $userRoleModel->getUserRole(1, 3));
+
+        $this->assertTrue($projectModel->update(array('id' => 1, 'is_everybody_allowed' => 1)));
+
+        $this->assertEquals(Role::PROJECT_MANAGER, $userRoleModel->getUserRole(1, 2));
+        $this->assertEquals(Role::PROJECT_MEMBER, $userRoleModel->getUserRole(1, 3));
+    }
+
     public function testGetAssignableUsersWithDisabledUsers()
     {
-        $projectModel = new Project($this->container);
-        $userModel = new User($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userModel = new UserModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
         $this->assertEquals(2, $userModel->create(array('username' => 'user1', 'name' => 'User1')));
@@ -133,9 +153,9 @@ class ProjectUserRoleTest extends Base
 
     public function testGetAssignableUsersWithoutGroups()
     {
-        $projectModel = new Project($this->container);
-        $userModel = new User($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userModel = new UserModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
         $this->assertEquals(2, $userModel->create(array('username' => 'user1', 'name' => 'User1')));
@@ -154,12 +174,12 @@ class ProjectUserRoleTest extends Base
 
     public function testGetAssignableUsersWithGroups()
     {
-        $projectModel = new Project($this->container);
-        $userModel = new User($this->container);
-        $groupModel = new Group($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
-        $groupRoleModel = new ProjectGroupRole($this->container);
-        $groupMemberModel = new GroupMember($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userModel = new UserModel($this->container);
+        $groupModel = new GroupModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
+        $groupRoleModel = new ProjectGroupRoleModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test')));
 
@@ -191,9 +211,9 @@ class ProjectUserRoleTest extends Base
 
     public function testGetAssignableUsersList()
     {
-        $projectModel = new Project($this->container);
-        $userModel = new User($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userModel = new UserModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test1')));
         $this->assertEquals(2, $projectModel->create(array('name' => 'Test2')));
@@ -229,9 +249,9 @@ class ProjectUserRoleTest extends Base
 
     public function testGetAssignableUsersWithEverybodyAllowed()
     {
-        $projectModel = new Project($this->container);
-        $userModel = new User($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $userModel = new UserModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Test', 'is_everybody_allowed' => 1)));
 
@@ -252,10 +272,10 @@ class ProjectUserRoleTest extends Base
 
     public function testGetAssignableUsersWithDisabledUsersAndEverybodyAllowed()
     {
-        $projectModel = new Project($this->container);
-        $projectPermission = new ProjectPermission($this->container);
-        $userModel = new User($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $projectPermission = new ProjectPermissionModel($this->container);
+        $userModel = new UserModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(2, $userModel->create(array('username' => 'user1', 'name' => 'User1')));
         $this->assertEquals(3, $userModel->create(array('username' => 'user2', 'name' => 'User2')));
@@ -282,12 +302,12 @@ class ProjectUserRoleTest extends Base
 
     public function testGetProjectsByUser()
     {
-        $userModel = new User($this->container);
-        $projectModel = new Project($this->container);
-        $groupModel = new Group($this->container);
-        $groupMemberModel = new GroupMember($this->container);
-        $groupRoleModel = new ProjectGroupRole($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $userModel = new UserModel($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $groupModel = new GroupModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
+        $groupRoleModel = new ProjectGroupRoleModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Project 1')));
         $this->assertEquals(2, $projectModel->create(array('name' => 'Project 2')));
@@ -344,12 +364,12 @@ class ProjectUserRoleTest extends Base
 
     public function testGetActiveProjectsByUser()
     {
-        $userModel = new User($this->container);
-        $projectModel = new Project($this->container);
-        $groupModel = new Group($this->container);
-        $groupMemberModel = new GroupMember($this->container);
-        $groupRoleModel = new ProjectGroupRole($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $userModel = new UserModel($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $groupModel = new GroupModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
+        $groupRoleModel = new ProjectGroupRoleModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Project 1', 'is_active' => 0)));
         $this->assertEquals(2, $projectModel->create(array('name' => 'Project 2')));
@@ -378,36 +398,36 @@ class ProjectUserRoleTest extends Base
         $this->assertTrue($userRoleModel->addUser(2, 6, Role::PROJECT_MEMBER));
         $this->assertTrue($userRoleModel->addUser(2, 7, Role::PROJECT_MEMBER));
 
-        $projects = $userRoleModel->getProjectsByUser(2, array(Project::ACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(2, array(ProjectModel::ACTIVE));
         $this->assertCount(0, $projects);
 
-        $projects = $userRoleModel->getProjectsByUser(3, array(Project::ACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(3, array(ProjectModel::ACTIVE));
         $this->assertCount(0, $projects);
 
-        $projects = $userRoleModel->getProjectsByUser(4, array(Project::ACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(4, array(ProjectModel::ACTIVE));
         $this->assertCount(0, $projects);
 
-        $projects = $userRoleModel->getProjectsByUser(5, array(Project::ACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(5, array(ProjectModel::ACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 2', $projects[2]);
 
-        $projects = $userRoleModel->getProjectsByUser(6, array(Project::ACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(6, array(ProjectModel::ACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 2', $projects[2]);
 
-        $projects = $userRoleModel->getProjectsByUser(7, array(Project::ACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(7, array(ProjectModel::ACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 2', $projects[2]);
     }
 
     public function testGetInactiveProjectsByUser()
     {
-        $userModel = new User($this->container);
-        $projectModel = new Project($this->container);
-        $groupModel = new Group($this->container);
-        $groupMemberModel = new GroupMember($this->container);
-        $groupRoleModel = new ProjectGroupRole($this->container);
-        $userRoleModel = new ProjectUserRole($this->container);
+        $userModel = new UserModel($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $groupModel = new GroupModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
+        $groupRoleModel = new ProjectGroupRoleModel($this->container);
+        $userRoleModel = new ProjectUserRoleModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'Project 1', 'is_active' => 0)));
         $this->assertEquals(2, $projectModel->create(array('name' => 'Project 2')));
@@ -436,26 +456,26 @@ class ProjectUserRoleTest extends Base
         $this->assertTrue($userRoleModel->addUser(2, 6, Role::PROJECT_MEMBER));
         $this->assertTrue($userRoleModel->addUser(2, 7, Role::PROJECT_MEMBER));
 
-        $projects = $userRoleModel->getProjectsByUser(2, array(Project::INACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(2, array(ProjectModel::INACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 1', $projects[1]);
 
-        $projects = $userRoleModel->getProjectsByUser(3, array(Project::INACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(3, array(ProjectModel::INACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 1', $projects[1]);
 
-        $projects = $userRoleModel->getProjectsByUser(4, array(Project::INACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(4, array(ProjectModel::INACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 1', $projects[1]);
 
-        $projects = $userRoleModel->getProjectsByUser(5, array(Project::INACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(5, array(ProjectModel::INACTIVE));
         $this->assertCount(0, $projects);
 
-        $projects = $userRoleModel->getProjectsByUser(6, array(Project::INACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(6, array(ProjectModel::INACTIVE));
         $this->assertCount(1, $projects);
         $this->assertEquals('Project 1', $projects[1]);
 
-        $projects = $userRoleModel->getProjectsByUser(7, array(Project::INACTIVE));
+        $projects = $userRoleModel->getProjectsByUser(7, array(ProjectModel::INACTIVE));
         $this->assertCount(0, $projects);
     }
 }

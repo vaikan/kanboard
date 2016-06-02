@@ -12,14 +12,16 @@
             <meta http-equiv="refresh" content="<?= $board_public_refresh_interval ?>">
         <?php endif ?>
 
-        <?php if (! isset($not_editable)): ?>
-            <?= $this->asset->js('assets/js/app.js') ?>
-        <?php endif ?>
-
         <?= $this->asset->colorCss() ?>
-        <?= $this->asset->css('assets/css/app.css') ?>
-        <?= $this->asset->css('assets/css/print.css', true, 'print') ?>
+        <?= $this->asset->css('assets/css/vendor.min.css') ?>
+        <?= $this->asset->css('assets/css/app.min.css') ?>
+        <?= $this->asset->css('assets/css/print.min.css', true, 'print') ?>
         <?= $this->asset->customCss() ?>
+
+        <?php if (! isset($not_editable)): ?>
+            <?= $this->asset->js('assets/js/vendor.min.js') ?>
+            <?= $this->asset->js('assets/js/app.min.js') ?>
+        <?php endif ?>
 
         <?= $this->hook->asset('css', 'template:layout:css') ?>
         <?= $this->hook->asset('js', 'template:layout:js') ?>
@@ -30,13 +32,21 @@
         <link rel="apple-touch-icon" sizes="114x114" href="<?= $this->url->dir() ?>assets/img/touch-icon-iphone-retina.png">
         <link rel="apple-touch-icon" sizes="144x144" href="<?= $this->url->dir() ?>assets/img/touch-icon-ipad-retina.png">
 
-        <title><?= isset($title) ? $this->text->e($title) : 'Kanboard' ?></title>
+        <title>
+            <?php if (isset($page_title)): ?>
+                <?= $this->text->e($page_title) ?>
+            <?php elseif (isset($title)): ?>
+                <?= $this->text->e($title) ?>
+            <?php else: ?>
+                Kanboard
+            <?php endif ?>
+        </title>
 
         <?= $this->hook->render('template:layout:head') ?>
     </head>
-    <body data-status-url="<?= $this->url->href('app', 'status') ?>"
-          data-login-url="<?= $this->url->href('auth', 'login') ?>"
-          data-keyboard-shortcut-url="<?= $this->url->href('Doc', 'shortcuts') ?>"
+    <body data-status-url="<?= $this->url->href('UserAjaxController', 'status') ?>"
+          data-login-url="<?= $this->url->href('AuthController', 'login') ?>"
+          data-keyboard-shortcut-url="<?= $this->url->href('DocumentationController', 'shortcuts') ?>"
           data-timezone="<?= $this->app->getTimezone() ?>"
           data-js-lang="<?= $this->app->jsLang() ?>">
 
@@ -54,6 +64,6 @@
             <?= $content_for_layout ?>
         </section>
         <?= $this->hook->render('template:layout:bottom') ?>
-     <?php endif ?>
+    <?php endif ?>
     </body>
 </html>

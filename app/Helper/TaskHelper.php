@@ -22,27 +22,22 @@ class TaskHelper extends Base
 
     public function getColors()
     {
-        return $this->color->getList();
+        return $this->colorModel->getList();
     }
 
     public function recurrenceTriggers()
     {
-        return $this->task->getRecurrenceTriggerList();
+        return $this->taskModel->getRecurrenceTriggerList();
     }
 
     public function recurrenceTimeframes()
     {
-        return $this->task->getRecurrenceTimeframeList();
+        return $this->taskModel->getRecurrenceTimeframeList();
     }
 
     public function recurrenceBasedates()
     {
-        return $this->task->getRecurrenceBasedateList();
-    }
-
-    public function canRemove(array $task)
-    {
-        return $this->taskPermission->canRemoveTask($task);
+        return $this->taskModel->getRecurrenceBasedateList();
     }
 
     public function selectAssignee(array $users, array $values, array $errors = array(), array $attributes = array())
@@ -142,7 +137,7 @@ class TaskHelper extends Base
 
     public function selectStartDate(array $values, array $errors = array(), array $attributes = array())
     {
-        $placeholder = date($this->config->get('application_date_format', 'm/d/Y H:i'));
+        $placeholder = date($this->configModel->get('application_date_format', 'm/d/Y H:i'));
         $attributes = array_merge(array('tabindex="11"', 'placeholder="'.$placeholder.'"'), $attributes);
 
         $html = $this->helper->form->label(t('Start Date'), 'date_started');
@@ -153,7 +148,7 @@ class TaskHelper extends Base
 
     public function selectDueDate(array $values, array $errors = array(), array $attributes = array())
     {
-        $placeholder = date($this->config->get('application_date_format', 'm/d/Y'));
+        $placeholder = date($this->configModel->get('application_date_format', 'm/d/Y'));
         $attributes = array_merge(array('tabindex="12"', 'placeholder="'.$placeholder.'"'), $attributes);
 
         $html = $this->helper->form->label(t('Due Date'), 'date_due');
@@ -178,9 +173,9 @@ class TaskHelper extends Base
     public function getProgress($task)
     {
         if (! isset($this->columns[$task['project_id']])) {
-            $this->columns[$task['project_id']] = $this->column->getList($task['project_id']);
+            $this->columns[$task['project_id']] = $this->columnModel->getList($task['project_id']);
         }
 
-        return $this->task->getProgress($task, $this->columns[$task['project_id']]);
+        return $this->taskModel->getProgress($task, $this->columns[$task['project_id']]);
     }
 }

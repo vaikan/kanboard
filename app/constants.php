@@ -1,11 +1,30 @@
 <?php
 
-// Enable/disable debug
-defined('DEBUG') or define('DEBUG', getenv('DEBUG'));
-defined('DEBUG_FILE') or define('DEBUG_FILE', getenv('DEBUG_FILE') ?: __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'data'.DIRECTORY_SEPARATOR.'debug.log');
+// Root directory
+define('ROOT_DIR', __DIR__.DIRECTORY_SEPARATOR.'..');
 
-// Plugin directory
-defined('PLUGINS_DIR') or define('PLUGINS_DIR', __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'plugins');
+// App directory
+define('APP_DIR', __DIR__);
+
+// Data directory location
+defined('DATA_DIR') or define('DATA_DIR', ROOT_DIR.DIRECTORY_SEPARATOR.'data');
+
+// Files directory (attachments)
+defined('FILES_DIR') or define('FILES_DIR', DATA_DIR.DIRECTORY_SEPARATOR.'files');
+
+// Plugins settings
+defined('PLUGINS_DIR') or define('PLUGINS_DIR', ROOT_DIR.DIRECTORY_SEPARATOR.'plugins');
+defined('PLUGIN_API_URL') or define('PLUGIN_API_URL', 'https://kanboard.net/plugins.json');
+defined('PLUGIN_INSTALLER') or define('PLUGIN_INSTALLER', true);
+
+// Enable/disable debug
+defined('DEBUG') or define('DEBUG', strtolower(getenv('DEBUG')) === 'true');
+
+// Logging drivers: syslog, stdout, stderr or file
+defined('LOG_DRIVER') or define('LOG_DRIVER', getenv('LOG_DRIVER'));
+
+// Logging file
+defined('LOG_FILE') or define('LOG_FILE', DATA_DIR.DIRECTORY_SEPARATOR.'debug.log');
 
 // Application version
 defined('APP_VERSION') or define('APP_VERSION', build_app_version('$Format:%d$', '$Format:%H$'));
@@ -14,7 +33,7 @@ defined('APP_VERSION') or define('APP_VERSION', build_app_version('$Format:%d$',
 defined('DB_DRIVER') or define('DB_DRIVER', 'sqlite');
 
 // Sqlite configuration
-defined('DB_FILENAME') or define('DB_FILENAME', 'data'.DIRECTORY_SEPARATOR.'db.sqlite');
+defined('DB_FILENAME') or define('DB_FILENAME', DATA_DIR.DIRECTORY_SEPARATOR.'db.sqlite');
 
 // Mysql/Postgres configuration
 defined('DB_USERNAME') or define('DB_USERNAME', 'root');
@@ -22,6 +41,9 @@ defined('DB_PASSWORD') or define('DB_PASSWORD', '');
 defined('DB_HOSTNAME') or define('DB_HOSTNAME', 'localhost');
 defined('DB_NAME') or define('DB_NAME', 'kanboard');
 defined('DB_PORT') or define('DB_PORT', null);
+defined('DB_SSL_KEY') or define('DB_SSL_KEY', null);
+defined('DB_SSL_CERT') or define('DB_SSL_CERT', null);
+defined('DB_SSL_CA') or define('DB_SSL_CA', null);
 
 // Database backend group provider
 defined('DB_GROUP_PROVIDER') or define('DB_GROUP_PROVIDER', true);
@@ -44,6 +66,8 @@ defined('LDAP_USER_ATTRIBUTE_USERNAME') or define('LDAP_USER_ATTRIBUTE_USERNAME'
 defined('LDAP_USER_ATTRIBUTE_FULLNAME') or define('LDAP_USER_ATTRIBUTE_FULLNAME', 'cn');
 defined('LDAP_USER_ATTRIBUTE_EMAIL') or define('LDAP_USER_ATTRIBUTE_EMAIL', 'mail');
 defined('LDAP_USER_ATTRIBUTE_GROUPS') or define('LDAP_USER_ATTRIBUTE_GROUPS', 'memberof');
+defined('LDAP_USER_ATTRIBUTE_PHOTO') or define('LDAP_USER_ATTRIBUTE_PHOTO', '');
+defined('LDAP_USER_ATTRIBUTE_LANGUAGE') or define('LDAP_USER_ATTRIBUTE_LANGUAGE', '');
 defined('LDAP_USER_CREATION') or define('LDAP_USER_CREATION', true);
 
 defined('LDAP_GROUP_ADMIN_DN') or define('LDAP_GROUP_ADMIN_DN', '');
@@ -52,6 +76,7 @@ defined('LDAP_GROUP_MANAGER_DN') or define('LDAP_GROUP_MANAGER_DN', '');
 defined('LDAP_GROUP_PROVIDER') or define('LDAP_GROUP_PROVIDER', false);
 defined('LDAP_GROUP_BASE_DN') or define('LDAP_GROUP_BASE_DN', '');
 defined('LDAP_GROUP_FILTER') or define('LDAP_GROUP_FILTER', '');
+defined('LDAP_GROUP_USER_FILTER') or define('LDAP_GROUP_USER_FILTER', '');
 defined('LDAP_GROUP_ATTRIBUTE_NAME') or define('LDAP_GROUP_ATTRIBUTE_NAME', 'cn');
 
 // Proxy authentication
@@ -78,12 +103,6 @@ defined('ENABLE_HSTS') or define('ENABLE_HSTS', true);
 
 // Enable or disable "X-Frame-Options: DENY" HTTP header
 defined('ENABLE_XFRAME') or define('ENABLE_XFRAME', true);
-
-// Syslog
-defined('ENABLE_SYSLOG') or define('ENABLE_SYSLOG', getenv('ENABLE_SYSLOG'));
-
-// Default files directory
-defined('FILES_DIR') or define('FILES_DIR', 'data'.DIRECTORY_SEPARATOR.'files');
 
 // Escape html inside markdown text
 defined('MARKDOWN_ESCAPE_HTML') or define('MARKDOWN_ESCAPE_HTML', true);

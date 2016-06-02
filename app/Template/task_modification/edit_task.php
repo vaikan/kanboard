@@ -1,8 +1,7 @@
 <div class="page-header">
     <h2><?= t('Edit a task') ?></h2>
 </div>
-<form class="popover-form" method="post" action="<?= $this->url->href('taskmodification', 'update', array('task_id' => $task['id'], 'project_id' => $task['project_id'])) ?>" autocomplete="off">
-
+<form class="popover-form" method="post" action="<?= $this->url->href('TaskModificationController', 'update', array('task_id' => $task['id'], 'project_id' => $task['project_id'])) ?>" autocomplete="off">
     <?= $this->form->csrf() ?>
     <?= $this->form->hidden('id', $values) ?>
     <?= $this->form->hidden('project_id', $values) ?>
@@ -14,6 +13,8 @@
         <?= $this->task->selectCategory($categories_list, $values, $errors) ?>
         <?= $this->task->selectPriority($project, $values) ?>
         <?= $this->task->selectScore($values, $errors) ?>
+
+        <?= $this->hook->render('template:task:form:left-column', array('values' => $values, 'errors' => $errors)) ?>
     </div>
 
     <div class="form-column">
@@ -21,6 +22,8 @@
         <?= $this->task->selectTimeSpent($values, $errors) ?>
         <?= $this->task->selectStartDate($values, $errors) ?>
         <?= $this->task->selectDueDate($values, $errors) ?>
+
+        <?= $this->hook->render('template:task:form:right-column', array('values' => $values, 'errors' => $errors)) ?>
     </div>
 
     <div class="form-clear">
@@ -30,6 +33,6 @@
     <div class="form-actions">
         <button type="submit" class="btn btn-blue" tabindex="15"><?= t('Save') ?></button>
         <?= t('or') ?>
-        <?= $this->url->link(t('cancel'), 'task', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id']), false, 'close-popover') ?>
+        <?= $this->url->link(t('cancel'), 'TaskViewController', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id']), false, 'close-popover') ?>
     </div>
 </form>

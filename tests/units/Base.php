@@ -3,11 +3,11 @@
 require __DIR__.'/../../vendor/autoload.php';
 require __DIR__.'/../../app/constants.php';
 
+use Composer\Autoload\ClassLoader;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\Debug\TraceableEventDispatcher;
 use Symfony\Component\Stopwatch\Stopwatch;
 use SimpleLogger\Logger;
-use SimpleLogger\File;
 use Kanboard\Core\Session\FlashMessage;
 use Kanboard\Core\Session\SessionStorage;
 use Kanboard\ServiceProvider\ActionProvider;
@@ -33,13 +33,15 @@ abstract class Base extends PHPUnit_Framework_TestCase
         }
 
         $this->container = new Pimple\Container;
-        $this->container->register(new Kanboard\ServiceProvider\HelperProvider);
-        $this->container->register(new Kanboard\ServiceProvider\AuthenticationProvider);
-        $this->container->register(new Kanboard\ServiceProvider\DatabaseProvider);
-        $this->container->register(new Kanboard\ServiceProvider\ClassProvider);
-        $this->container->register(new Kanboard\ServiceProvider\NotificationProvider);
-        $this->container->register(new Kanboard\ServiceProvider\RouteProvider);
-        $this->container->register(new Kanboard\ServiceProvider\AvatarProvider);
+        $this->container->register(new Kanboard\ServiceProvider\HelperProvider());
+        $this->container->register(new Kanboard\ServiceProvider\AuthenticationProvider());
+        $this->container->register(new Kanboard\ServiceProvider\DatabaseProvider());
+        $this->container->register(new Kanboard\ServiceProvider\ClassProvider());
+        $this->container->register(new Kanboard\ServiceProvider\NotificationProvider());
+        $this->container->register(new Kanboard\ServiceProvider\RouteProvider());
+        $this->container->register(new Kanboard\ServiceProvider\AvatarProvider());
+        $this->container->register(new Kanboard\ServiceProvider\FilterProvider());
+        $this->container->register(new Kanboard\ServiceProvider\QueueProvider());
 
         $this->container['dispatcher'] = new TraceableEventDispatcher(
             new EventDispatcher,
@@ -47,9 +49,7 @@ abstract class Base extends PHPUnit_Framework_TestCase
         );
 
         $this->container['db']->logQueries = true;
-
         $this->container['logger'] = new Logger;
-        $this->container['logger']->setLogger(new File($this->isWindows() ? 'NUL' : '/dev/null'));
 
         $this->container['httpClient'] = $this
             ->getMockBuilder('\Kanboard\Core\Http\Client')
@@ -63,8 +63,8 @@ abstract class Base extends PHPUnit_Framework_TestCase
             ->setMethods(array('send'))
             ->getMock();
 
-        $this->container['userNotificationType'] = $this
-            ->getMockBuilder('\Kanboard\Model\UserNotificationType')
+        $this->container['userNotificationTypeModel'] = $this
+            ->getMockBuilder('\Kanboard\Model\UserNotificationTypeModel')
             ->setConstructorArgs(array($this->container))
             ->setMethods(array('getType', 'getSelectedTypes'))
             ->getMock();
@@ -81,15 +81,14 @@ abstract class Base extends PHPUnit_Framework_TestCase
         $this->container['flash'] = function ($c) {
             return new FlashMessage($c);
         };
+
+        $loader = new ClassLoader();
+        $loader->addPsr4('Kanboard\Plugin\\', PLUGINS_DIR);
+        $loader->register();
     }
 
     public function tearDown()
     {
         $this->container['db']->closeConnection();
-    }
-
-    public function isWindows()
-    {
-        return substr(PHP_OS, 0, 3) === 'WIN';
     }
 }

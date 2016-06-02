@@ -2,16 +2,16 @@
 
 require_once __DIR__.'/../Base.php';
 
-use Kanboard\Model\Group;
-use Kanboard\Model\User;
-use Kanboard\Model\GroupMember;
+use Kanboard\Model\GroupModel;
+use Kanboard\Model\UserModel;
+use Kanboard\Model\GroupMemberModel;
 
 class GroupMemberTest extends Base
 {
     public function testAddRemove()
     {
-        $groupModel = new Group($this->container);
-        $groupMemberModel = new GroupMember($this->container);
+        $groupModel = new GroupModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
 
         $this->assertEquals(1, $groupModel->create('Test'));
 
@@ -32,9 +32,9 @@ class GroupMemberTest extends Base
 
     public function testMembers()
     {
-        $userModel = new User($this->container);
-        $groupModel = new Group($this->container);
-        $groupMemberModel = new GroupMember($this->container);
+        $userModel = new UserModel($this->container);
+        $groupModel = new GroupModel($this->container);
+        $groupMemberModel = new GroupMemberModel($this->container);
 
         $this->assertEquals(1, $groupModel->create('Group A'));
         $this->assertEquals(2, $groupModel->create('Group B'));
@@ -72,5 +72,35 @@ class GroupMemberTest extends Base
         $this->assertCount(2, $users);
         $this->assertEquals('admin', $users[0]['username']);
         $this->assertEquals('user1', $users[1]['username']);
+
+        $groups = $groupMemberModel->getGroups(1);
+        $this->assertCount(1, $groups);
+        $this->assertEquals(1, $groups[0]['id']);
+        $this->assertEquals('Group A', $groups[0]['name']);
+
+        $groups = $groupMemberModel->getGroups(2);
+        $this->assertCount(1, $groups);
+        $this->assertEquals(1, $groups[0]['id']);
+        $this->assertEquals('Group A', $groups[0]['name']);
+
+        $groups = $groupMemberModel->getGroups(3);
+        $this->assertCount(1, $groups);
+        $this->assertEquals(2, $groups[0]['id']);
+        $this->assertEquals('Group B', $groups[0]['name']);
+
+        $groups = $groupMemberModel->getGroups(4);
+        $this->assertCount(1, $groups);
+        $this->assertEquals(2, $groups[0]['id']);
+        $this->assertEquals('Group B', $groups[0]['name']);
+
+        $groups = $groupMemberModel->getGroups(5);
+        $this->assertCount(2, $groups);
+        $this->assertEquals(1, $groups[0]['id']);
+        $this->assertEquals('Group A', $groups[0]['name']);
+        $this->assertEquals(2, $groups[1]['id']);
+        $this->assertEquals('Group B', $groups[1]['name']);
+
+        $groups = $groupMemberModel->getGroups(6);
+        $this->assertCount(0, $groups);
     }
 }

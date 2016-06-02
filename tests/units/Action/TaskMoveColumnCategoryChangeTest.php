@@ -3,21 +3,21 @@
 require_once __DIR__.'/../Base.php';
 
 use Kanboard\Event\GenericEvent;
-use Kanboard\Model\Category;
-use Kanboard\Model\Task;
-use Kanboard\Model\TaskFinder;
-use Kanboard\Model\TaskCreation;
-use Kanboard\Model\Project;
+use Kanboard\Model\CategoryModel;
+use Kanboard\Model\TaskModel;
+use Kanboard\Model\TaskFinderModel;
+use Kanboard\Model\TaskCreationModel;
+use Kanboard\Model\ProjectModel;
 use Kanboard\Action\TaskMoveColumnCategoryChange;
 
 class TaskMoveColumnCategoryChangeTest extends Base
 {
     public function testSuccess()
     {
-        $projectModel = new Project($this->container);
-        $taskCreationModel = new TaskCreation($this->container);
-        $taskFinderModel = new TaskFinder($this->container);
-        $categoryModel = new Category($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $taskCreationModel = new TaskCreationModel($this->container);
+        $taskFinderModel = new TaskFinderModel($this->container);
+        $categoryModel = new CategoryModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'test1')));
         $this->assertEquals(2, $projectModel->create(array('name' => 'test2')));
@@ -31,7 +31,7 @@ class TaskMoveColumnCategoryChangeTest extends Base
         $action->setParam('category_id', 1);
         $action->setParam('dest_column_id', 2);
 
-        $this->assertTrue($action->execute($event, Task::EVENT_UPDATE));
+        $this->assertTrue($action->execute($event, TaskModel::EVENT_UPDATE));
 
         $task = $taskFinderModel->getById(1);
         $this->assertNotEmpty($task);
@@ -41,10 +41,9 @@ class TaskMoveColumnCategoryChangeTest extends Base
 
     public function testWithWrongColumn()
     {
-        $projectModel = new Project($this->container);
-        $taskCreationModel = new TaskCreation($this->container);
-        $taskFinderModel = new TaskFinder($this->container);
-        $categoryModel = new Category($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $taskCreationModel = new TaskCreationModel($this->container);
+        $categoryModel = new CategoryModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'test1')));
         $this->assertEquals(2, $projectModel->create(array('name' => 'test2')));
@@ -58,15 +57,14 @@ class TaskMoveColumnCategoryChangeTest extends Base
         $action->setParam('category_id', 1);
         $action->setParam('dest_column_id', 2);
 
-        $this->assertFalse($action->execute($event, Task::EVENT_UPDATE));
+        $this->assertFalse($action->execute($event, TaskModel::EVENT_UPDATE));
     }
 
     public function testWithWrongCategory()
     {
-        $projectModel = new Project($this->container);
-        $taskCreationModel = new TaskCreation($this->container);
-        $taskFinderModel = new TaskFinder($this->container);
-        $categoryModel = new Category($this->container);
+        $projectModel = new ProjectModel($this->container);
+        $taskCreationModel = new TaskCreationModel($this->container);
+        $categoryModel = new CategoryModel($this->container);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'test1')));
         $this->assertEquals(2, $projectModel->create(array('name' => 'test2')));
@@ -81,6 +79,6 @@ class TaskMoveColumnCategoryChangeTest extends Base
         $action->setParam('category_id', 1);
         $action->setParam('dest_column_id', 2);
 
-        $this->assertFalse($action->execute($event, Task::EVENT_UPDATE));
+        $this->assertFalse($action->execute($event, TaskModel::EVENT_UPDATE));
     }
 }

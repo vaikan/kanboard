@@ -2,73 +2,13 @@
 
 require_once __DIR__.'/../Base.php';
 
-use Kanboard\Model\Config;
+use Kanboard\Model\ConfigModel;
 
 class ConfigTest extends Base
 {
-    public function testGetTimezones()
-    {
-        $configModel = new Config($this->container);
-        $this->assertNotEmpty($configModel->getTimezones());
-        $this->assertArrayHasKey('Europe/Paris', $configModel->getTimezones());
-        $this->assertContains('Europe/Paris', $configModel->getTimezones());
-        $this->assertArrayNotHasKey('', $configModel->getTimezones());
-
-        $this->assertArrayHasKey('', $configModel->getTimezones(true));
-        $this->assertContains('Application default', $configModel->getTimezones(true));
-    }
-
-    public function testGetLanguages()
-    {
-        $configModel = new Config($this->container);
-        $this->assertNotEmpty($configModel->getLanguages());
-        $this->assertArrayHasKey('fr_FR', $configModel->getLanguages());
-        $this->assertContains('Français', $configModel->getLanguages());
-        $this->assertArrayNotHasKey('', $configModel->getLanguages());
-
-        $this->assertArrayHasKey('', $configModel->getLanguages(true));
-        $this->assertContains('Application default', $configModel->getLanguages(true));
-    }
-
-    public function testGetJsLanguage()
-    {
-        $configModel = new Config($this->container);
-        $this->assertEquals('en', $configModel->getJsLanguageCode());
-
-        $this->container['sessionStorage']->user = array('language' => 'fr_FR');
-        $this->assertEquals('fr', $configModel->getJsLanguageCode());
-
-        $this->container['sessionStorage']->user = array('language' => 'xx_XX');
-        $this->assertEquals('en', $configModel->getJsLanguageCode());
-    }
-
-    public function testGetCurrentLanguage()
-    {
-        $configModel = new Config($this->container);
-        $this->assertEquals('en_US', $configModel->getCurrentLanguage());
-
-        $this->container['sessionStorage']->user = array('language' => 'fr_FR');
-        $this->assertEquals('fr_FR', $configModel->getCurrentLanguage());
-
-        $this->container['sessionStorage']->user = array('language' => 'xx_XX');
-        $this->assertEquals('xx_XX', $configModel->getCurrentLanguage());
-    }
-
-    public function testGetCurrentTimezone()
-    {
-        $configModel = new Config($this->container);
-        $this->assertEquals('UTC', $configModel->getCurrentTimezone());
-
-        $this->container['sessionStorage']->user = array('timezone' => 'Europe/Paris');
-        $this->assertEquals('Europe/Paris', $configModel->getCurrentTimezone());
-
-        $this->container['sessionStorage']->user = array('timezone' => 'Something');
-        $this->assertEquals('Something', $configModel->getCurrentTimezone());
-    }
-
     public function testRegenerateToken()
     {
-        $configModel = new Config($this->container);
+        $configModel = new ConfigModel($this->container);
         $token = $configModel->getOption('api_token');
         $this->assertTrue($configModel->regenerateToken('api_token'));
         $this->assertNotEquals($token, $configModel->getOption('api_token'));
@@ -76,7 +16,7 @@ class ConfigTest extends Base
 
     public function testCRUDOperations()
     {
-        $c = new Config($this->container);
+        $c = new ConfigModel($this->container);
 
         $this->assertTrue($c->save(array('key1' => 'value1')));
         $this->assertTrue($c->save(array('key1' => 'value2')));
@@ -101,7 +41,7 @@ class ConfigTest extends Base
 
     public function testSaveApplicationUrl()
     {
-        $c = new Config($this->container);
+        $c = new ConfigModel($this->container);
 
         $this->assertTrue($c->save(array('application_url' => 'http://localhost/')));
         $this->assertEquals('http://localhost/', $c->getOption('application_url'));
@@ -115,7 +55,7 @@ class ConfigTest extends Base
 
     public function testDefaultValues()
     {
-        $c = new Config($this->container);
+        $c = new ConfigModel($this->container);
 
         $this->assertEquals(172800, $c->getOption('board_highlight_period'));
         $this->assertEquals(60, $c->getOption('board_public_refresh_interval'));
@@ -152,7 +92,7 @@ class ConfigTest extends Base
 
     public function testGetOption()
     {
-        $c = new Config($this->container);
+        $c = new ConfigModel($this->container);
 
         $this->assertEquals('', $c->getOption('board_columns'));
         $this->assertEquals('test', $c->getOption('board_columns', 'test'));
@@ -161,7 +101,7 @@ class ConfigTest extends Base
 
     public function testGetWithCaching()
     {
-        $c = new Config($this->container);
+        $c = new ConfigModel($this->container);
 
         $this->assertEquals('UTC', $c->get('application_timezone'));
         $this->assertTrue($c->save(array('application_timezone' => 'Europe/Paris')));

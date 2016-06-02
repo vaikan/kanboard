@@ -2,17 +2,17 @@
 
 require_once __DIR__.'/../Base.php';
 
-use Kanboard\Model\TaskCreation;
-use Kanboard\Model\TaskFinder;
-use Kanboard\Model\Project;
+use Kanboard\Model\TaskCreationModel;
+use Kanboard\Model\TaskFinderModel;
+use Kanboard\Model\ProjectModel;
 
 class TaskFinderTest extends Base
 {
     public function testGetOverdueTasks()
     {
-        $tc = new TaskCreation($this->container);
-        $tf = new TaskFinder($this->container);
-        $p = new Project($this->container);
+        $tc = new TaskCreationModel($this->container);
+        $tf = new TaskFinderModel($this->container);
+        $p = new ProjectModel($this->container);
 
         $this->assertEquals(1, $p->create(array('name' => 'Project #1')));
         $this->assertEquals(1, $tc->create(array('title' => 'Task #1', 'project_id' => 1, 'date_due' => strtotime('-1 day'))));
@@ -29,9 +29,9 @@ class TaskFinderTest extends Base
 
     public function testGetOverdueTasksByProject()
     {
-        $tc = new TaskCreation($this->container);
-        $tf = new TaskFinder($this->container);
-        $p = new Project($this->container);
+        $tc = new TaskCreationModel($this->container);
+        $tf = new TaskFinderModel($this->container);
+        $p = new ProjectModel($this->container);
 
         $this->assertEquals(1, $p->create(array('name' => 'Project #1')));
         $this->assertEquals(2, $p->create(array('name' => 'Project #2')));
@@ -44,15 +44,15 @@ class TaskFinderTest extends Base
         $tasks = $tf->getOverdueTasksByProject(1);
         $this->assertNotEmpty($tasks);
         $this->assertTrue(is_array($tasks));
-        $this->assertcount(1, $tasks);
+        $this->assertCount(1, $tasks);
         $this->assertEquals('Task #1', $tasks[0]['title']);
     }
 
     public function testGetOverdueTasksByUser()
     {
-        $tc = new TaskCreation($this->container);
-        $tf = new TaskFinder($this->container);
-        $p = new Project($this->container);
+        $tc = new TaskCreationModel($this->container);
+        $tf = new TaskFinderModel($this->container);
+        $p = new ProjectModel($this->container);
 
         $this->assertEquals(1, $p->create(array('name' => 'Project #1')));
         $this->assertEquals(2, $p->create(array('name' => 'Project #2')));
@@ -80,9 +80,9 @@ class TaskFinderTest extends Base
 
     public function testCountByProject()
     {
-        $tc = new TaskCreation($this->container);
-        $tf = new TaskFinder($this->container);
-        $p = new Project($this->container);
+        $tc = new TaskCreationModel($this->container);
+        $tf = new TaskFinderModel($this->container);
+        $p = new ProjectModel($this->container);
 
         $this->assertEquals(1, $p->create(array('name' => 'Project #1')));
         $this->assertEquals(2, $p->create(array('name' => 'Project #2')));
@@ -92,5 +92,24 @@ class TaskFinderTest extends Base
 
         $this->assertEquals(1, $tf->countByProjectId(1));
         $this->assertEquals(2, $tf->countByProjectId(2));
+    }
+
+    public function testGetProjectToken()
+    {
+        $taskCreationModel = new TaskCreationModel($this->container);
+        $taskFinderModel = new TaskFinderModel($this->container);
+        $projectModel = new ProjectModel($this->container);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'Project #1')));
+        $this->assertEquals(2, $projectModel->create(array('name' => 'Project #2')));
+
+        $this->assertTrue($projectModel->enablePublicAccess(1));
+
+        $this->assertEquals(1, $taskCreationModel->create(array('title' => 'Task #1', 'project_id' => 1)));
+        $this->assertEquals(2, $taskCreationModel->create(array('title' => 'Task #2', 'project_id' => 2)));
+
+        $project = $projectModel->getById(1);
+        $this->assertEquals($project['token'], $taskFinderModel->getProjectToken(1));
+        $this->assertEmpty($taskFinderModel->getProjectToken(2));
     }
 }

@@ -101,6 +101,7 @@ Technical details
 - [Run Kanboard with Docker](docker.markdown)
 - [Run Kanboard with Vagrant](vagrant.markdown)
 - [Run Kanboard on Cloudron](cloudron.markdown)
+- [Run Kanboard on Nitrous](nitrous.markdown)
 
 ### Configuration
 
@@ -109,6 +110,7 @@ Technical details
 - [Environment variables](env.markdown)
 - [Email configuration](email-configuration.markdown)
 - [URL rewriting](nice-urls.markdown)
+- [Plugin Directory](plugin-directory.markdown)
 
 ### Database
 
@@ -120,7 +122,9 @@ Technical details
 
 - [LDAP authentication](ldap-authentication.markdown)
 - [LDAP group synchronization](ldap-group-sync.markdown)
+- [LDAP profile picture](ldap-profile-picture.markdown)
 - [LDAP parameters](ldap-parameters.markdown)
+- [LDAP configuration examples](ldap-configuration-examples.markdown)
 - [Reverse proxy authentication](reverse-proxy-authentication.markdown)
 
 ### Contributors
