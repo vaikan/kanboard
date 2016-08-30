@@ -6,8 +6,8 @@
         <?php else: ?>
             <?= $this->url->link(
                 $this->text->e($task['category_name']),
-                'TaskPopoverController',
-                'changeCategory',
+                'TaskModificationController',
+                'edit',
                 array('task_id' => $task['id'], 'project_id' => $task['project_id']),
                 false,
                 'popover' . (! empty($task['category_description']) ? ' tooltip' : ''),
@@ -16,6 +16,16 @@
         <?php endif ?>
     </span>
 </div>
+<?php endif ?>
+
+<?php if (! empty($task['tags'])): ?>
+    <div class="task-tags">
+        <ul>
+        <?php foreach ($task['tags'] as $tag): ?>
+            <li><?= $this->text->e($tag['name']) ?></li>
+        <?php endforeach ?>
+        </ul>
+    </div>
 <?php endif ?>
 
 <div class="task-board-icons">
@@ -27,7 +37,11 @@
     <?php endif ?>
 
     <?php if (! empty($task['date_due'])): ?>
-        <span class="task-board-date <?= time() > $task['date_due'] ? 'task-board-date-overdue' : '' ?>">
+        <?php if (date('Y-m-d') == date('Y-m-d', $task['date_due'])): ?>
+        <span class="task-board-date task-board-date-today">
+        <?php elseif (time() > $task['date_due']): ?>
+        <span class="task-board-date task-board-date-overdue">
+        <?php endif ?>
             <i class="fa fa-calendar"></i>
             <?= $this->dt->date($task['date_due']) ?>
         </span>
@@ -67,8 +81,10 @@
         </span>
     <?php endif ?>
 
-    <?php if (! empty($task['time_estimated'])): ?>
-        <span class="task-time-estimated" title="<?= t('Time estimated') ?>"><?= $this->text->e($task['time_estimated']).'h' ?></span>
+    <?php if (! empty($task['time_estimated']) || ! empty($task['time_spent'])): ?>
+        <span class="task-time-estimated" title="<?= t('Time spent and estimated') ?>">
+            <?= $this->text->e($task['time_spent']) ?>/<?= $this->text->e($task['time_estimated']) ?>h
+        </span>
     <?php endif ?>
 
     <?php if ($task['is_milestone'] == 1): ?>

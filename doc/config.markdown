@@ -37,6 +37,17 @@ Folder for uploaded files
 define('FILES_DIR', 'data/files');
 ```
 
+Cache parameters
+----------------
+
+```php
+// Available cache drivers are "file" and "memory"
+define('CACHE_DRIVER', 'memory');
+
+// Cache folder to use if cache driver is "file" (must be writeable by the web server user)
+define('CACHE_DIR', DATA_DIR.DIRECTORY_SEPARATOR.'cache');
+```
+
 Enable/disable url rewrite
 --------------------------
 
@@ -267,8 +278,8 @@ Session
 define('SESSION_DURATION', 0);
 ```
 
-HTTP client proxy
------------------
+HTTP Client
+-----------
 
 If external HTTP requests need to be sent through a proxy:
 
@@ -277,6 +288,13 @@ define('HTTP_PROXY_HOSTNAME', '');
 define('HTTP_PROXY_PORT', '3128');
 define('HTTP_PROXY_USERNAME', '');
 define('HTTP_PROXY_PASSWORD', '');
+```
+
+To allow self-signed certificates:
+
+```php
+// Set to false to allow self-signed certificates
+define('HTTP_VERIFY_SSL_CERTIFICATE', true);
 ```
 
 Various settings

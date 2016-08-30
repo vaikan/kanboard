@@ -40,7 +40,7 @@ class ActionCreationController extends BaseController
             return $this->create();
         }
 
-        $this->response->html($this->template->render('action_creation/event', array(
+        return $this->response->html($this->template->render('action_creation/event', array(
             'values' => $values,
             'project' => $project,
             'available_actions' => $this->actionManager->getAvailableActions(),
@@ -72,7 +72,7 @@ class ActionCreationController extends BaseController
         $projects_list = $this->projectUserRoleModel->getActiveProjectsByUser($this->userSession->getId());
         unset($projects_list[$project['id']]);
 
-        $this->response->html($this->template->render('action_creation/params', array(
+        return $this->response->html($this->template->render('action_creation/params', array(
             'values' => $values,
             'action_params' => $action_params,
             'columns_list' => $this->columnModel->getList($project['id']),
@@ -81,9 +81,10 @@ class ActionCreationController extends BaseController
             'colors_list' => $this->colorModel->getList(),
             'categories_list' => $this->categoryModel->getList($project['id']),
             'links_list' => $this->linkModel->getList(0, false),
-            'priorities_list' => $this->projectModel->getPriorities($project),
+            'priorities_list' => $this->projectTaskPriorityModel->getPriorities($project),
             'project' => $project,
             'available_actions' => $this->actionManager->getAvailableActions(),
+            'swimlane_list' => $this->swimlaneModel->getList($project['id']),
             'events' => $this->actionManager->getCompatibleEvents($values['action_name']),
         )));
     }

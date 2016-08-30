@@ -2,8 +2,6 @@
 
 namespace Kanboard\Controller;
 
-use Kanboard\Core\DateParser;
-
 /**
  * Task Modification controller
  *
@@ -25,55 +23,6 @@ class TaskModificationController extends BaseController
     }
 
     /**
-     * Edit description form
-     *
-     * @access public
-     * @param array $values
-     * @param array $errors
-     * @throws \Kanboard\Core\Controller\AccessForbiddenException
-     * @throws \Kanboard\Core\Controller\PageNotFoundException
-     */
-    public function description(array $values = array(), array $errors = array())
-    {
-        $task = $this->getTask();
-
-        if (empty($values)) {
-            $values = array('id' => $task['id'], 'description' => $task['description']);
-        }
-
-        $this->response->html($this->template->render('task_modification/edit_description', array(
-            'values' => $values,
-            'errors' => $errors,
-            'task' => $task,
-        )));
-    }
-
-    /**
-     * Update description
-     *
-     * @access public
-     */
-    public function updateDescription()
-    {
-        $task = $this->getTask();
-        $values = $this->request->getValues();
-
-        list($valid, $errors) = $this->taskValidator->validateDescriptionCreation($values);
-
-        if ($valid) {
-            if ($this->taskModificationModel->update($values)) {
-                $this->flash->success(t('Task updated successfully.'));
-            } else {
-                $this->flash->failure(t('Unable to update your task.'));
-            }
-
-            return $this->response->redirect($this->helper->url->to('TaskViewController', 'show', array('project_id' => $task['project_id'], 'task_id' => $task['id'])), true);
-        }
-
-        return $this->description($values, $errors);
-    }
-
-    /**
      * Display a form to edit a task
      *
      * @access public
@@ -88,21 +37,16 @@ class TaskModificationController extends BaseController
         $project = $this->projectModel->getById($task['project_id']);
 
         if (empty($values)) {
-            $values = $task;
-            $values = $this->hook->merge('controller:task:form:default', $values, array('default_values' => $values));
-            $values = $this->hook->merge('controller:task-modification:form:default', $values, array('default_values' => $values));
+            $values = $this->prepareValues($task);
         }
 
-        $values = $this->dateParser->format($values, array('date_due'), $this->configModel->get('application_date_format', DateParser::DATE_FORMAT));
-        $values = $this->dateParser->format($values, array('date_started'), $this->configModel->get('application_datetime_format', DateParser::DATE_TIME_FORMAT));
-
-        $this->response->html($this->template->render('task_modification/edit_task', array(
+        $this->response->html($this->template->render('task_modification/show', array(
             'project' => $project,
             'values' => $values,
             'errors' => $errors,
             'task' => $task,
+            'tags' => $this->taskTagModel->getList($task['id']),
             'users_list' => $this->projectUserRoleModel->getAssignableUsersList($task['project_id']),
-            'colors_list' => $this->colorModel->getList(),
             'categories_list' => $this->categoryModel->getList($task['project_id']),
         )));
     }
@@ -126,5 +70,20 @@ class TaskModificationController extends BaseController
             $this->flash->failure(t('Unable to update your task.'));
             $this->edit($values, $errors);
         }
+    }
+
+    /**
+     * Prepare form values
+     *
+     * @access protected
+     * @param  array $task
+     * @return array
+     */
+    protected function prepareValues(array $task)
+    {
+        $values = $task;
+        $values = $this->hook->merge('controller:task:form:default', $values, array('default_values' => $values));
+        $values = $this->hook->merge('controller:task-modification:form:default', $values, array('default_values' => $values));
+        return $values;
     }
 }

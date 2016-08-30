@@ -1,16 +1,144 @@
-Version 1.0.29 (unreleased)
+Version 1.0.33 (unreleased)
+--------------
+
+New features:
+
+* Move a task without drag and drop (mobiles)
+* Add the possibility to unlock users from the user interface
+* New API calls for task metadata
+* New automatic actions:
+    - Define color by Swimlane
+    - Define priority by Swimlane
+
+Improvements:
+
+* Introduce Vue.js to manage user interface components
+* Show both time spent and estimated on the board
+* Store board collapsed mode user preference in the database
+* Store comment sorting direction in the database
+* Avoid tags overlapping on the board
+* Show project name in notifications
+* Allow priority changes for inverted priority scales
+* Add the possibility to attach template hooks with local variables and callback
+* Add "reference" hooks
+* Show project name in task forms
+* Convert vanilla CSS to SASS
+
+Bug fixes:
+
+* Fix undefined constant in config example file
+* Fix PHP notice when sending overdue notifications
+
+Version 1.0.32
+--------------
+
+New features:
+
+* New automated actions:
+    - Close tasks without activity in a specific column
+    - Set due date automatically
+    - Move a task to another column when closed
+    - Move a task to another column when not moved during a given period
+* New filter "moved" for moved date of tasks
+* Added internal task links to activity stream
+* Added new event for removed comments
+* Added search filter for task priority
+* Added the possibility to hide tasks in dashboard for a specific column
+* Documentation translated in Russian
+
+Improvements:
+
+* Improve background worker and job handler
+* New template hooks
+* Removed individual column scrolling on board, columns use the height of all tasks
+* Improve project page titles
+* Remove sidebar titles when not necessary
+* Internal events management refactoring
+* Handle header X-Real-IP to get IP address
+* Display project name for task auto-complete fields
+* Make search attributes not case sensitive
+* Display TOTP issuer for 2FA
+* Make sure that the table schema_version use InnoDB for Mysql
+* Use the library PicoFeed to generate RSS/Atom feeds
+* Change all links to the new repository
+
+Bug fixes:
+
+* Allow users to see inactive projects
+* Fixed typo in template that prevent project permissions to be duplicated
+* Fixed search query with multiple assignees (nested OR conditions)
+* Fixed Markdown editor auto-grow on the task form (Safari)
+* Fixed compatibility issue with PHP 5.3 for OAuthUserProvider class
+
+Version 1.0.31
+--------------
+
+New features:
+
+* Added tags: global and specific by project
+* Added application and project roles validation for API procedure calls
+* Added new API call: "getProjectByIdentifier"
+* Added new API calls for external task links, project attachments and subtask time tracking
+
+Improvements:
+
+* Use PHP 7 for the Docker image
+* Preserve role for existing users when using ReverseProxy authentication
+* Handle priority for task and project duplication
+* Expose task reference field to the user interface
+* Improve ICal export
+* Added argument owner_id and identifier to project API calls
+* Rewrite integration tests to run with Docker containers
+* Use the same task form layout everywhere
+* Removed some tasks dropdown menus that are now available with task edit form
+* Make embedded documentation readable in multiple languages (if a translation is available)
+* Added acceptance tests (browser tests)
+
+Bug fixes:
+
+* Fixed broken CSV exports
+* Fixed identical background color for LetterAvatar on 32bits platforms (Hash greater than PHP_MAX_INT)
+* Fixed lexer issue with non word characters
+* Flush memory cache in worker to get latest config values
+* Fixed empty title for web notification with only one overdue task
+* Take default swimlane into consideration for SwimlaneModel::getFirstActiveSwimlane()
+* Fixed "due today" highlighting
+
+Breaking changes:
+
+* Docker volume paths are changed to /var/www/app/{data,plugins}
+
+Version 1.0.30
+--------------
+
+Improvements:
+
+* Show tasks that are due today in a different color
+
+Bug fixes:
+
+* Fixed wrong controller for search in dashboard
+* Fixed plural form in alert message
+* Fixed CSS cosmetic issue with popover and tooltips
+
+Version 1.0.29
 --------------
 
 New features:
 
 * Manage plugin from the user interface and from the command line
+* Added support for background workers
 * Added the possibility to convert a subtask to a task
 * Added menu entry to add tasks from all project views
 * Add tasks in bulk from the board
 * Add dropdown for projects
+* Added config parameter to allow self-signed certificates for the HTTP client
 
 Improvements:
 
+* Display local date format in date picker
+* Configure email settings with the user interface in addition to config file
+* Upgrade Docker image to Alpine Linux 3.4
 * Move task import to a separate section
 * Mark web notification as read when clicking on it
 * Support strtotime strings for date search
@@ -19,13 +147,15 @@ Improvements:
 * Do not display task progress for tasks with no start/end date
 * Use Gulp and Bower to manage assets
 * Controller and Middleware refactoring
+* Replace jQuery mobile detection by the library isMobile
 
 Bug fixes:
 
+* Fixed user date format parsing for dates that can be valid in multiple formats
 * Do not sync user role if LDAP groups are not configured
 * Fixed issue with unicode handling for letter based avatars and user initials
 * Do not send notifications to disabled users
-* Fix wrong redirect when removing a task from the task view page
+* Fixed wrong redirect when removing a task from the task view page
 
 Breaking changes:
 

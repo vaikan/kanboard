@@ -12,6 +12,7 @@ Kanboard.BoardDragAndDrop.prototype.execute = function() {
 
 Kanboard.BoardDragAndDrop.prototype.dragAndDrop = function() {
     var self = this;
+    var dropzone = $(".board-task-list");
     var params = {
         forcePlaceholderSize: true,
         tolerance: "pointer",
@@ -42,12 +43,17 @@ Kanboard.BoardDragAndDrop.prototype.dragAndDrop = function() {
         }
     };
 
-    if ($.support.touch) {
+    if (isMobile.any) {
         $(".task-board-sort-handle").css("display", "inline");
         params["handle"] = ".task-board-sort-handle";
     }
 
-    $(".board-task-list").sortable(params);
+    // Set dropzone height to the height of the table cell
+    dropzone.each(function() {
+        $(this).css("min-height", $(this).parent().height());
+    });
+
+    dropzone.sortable(params);
 };
 
 Kanboard.BoardDragAndDrop.prototype.changeTaskState = function(taskId) {

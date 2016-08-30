@@ -40,8 +40,8 @@ class TaskValidator extends BaseValidator
             new Validators\Integer('priority', t('This value must be an integer')),
             new Validators\MaxLength('title', t('The maximum length is %d characters', 200), 200),
             new Validators\MaxLength('reference', t('The maximum length is %d characters', 50), 50),
-            new Validators\Date('date_due', t('Invalid date'), $this->dateParser->getDateFormats(true)),
-            new Validators\Date('date_started', t('Invalid date'), $this->dateParser->getDateTimeFormats(true)),
+            new Validators\Date('date_due', t('Invalid date'), $this->dateParser->getParserFormats()),
+            new Validators\Date('date_started', t('Invalid date'), $this->dateParser->getParserFormats()),
             new Validators\Numeric('time_spent', t('This value must be numeric')),
             new Validators\Numeric('time_estimated', t('This value must be numeric')),
         );
@@ -171,53 +171,6 @@ class TaskValidator extends BaseValidator
     {
         $rules = array(
             new Validators\Required('id', t('The id is required')),
-        );
-
-        $v = new Validator($values, array_merge($rules, $this->commonValidationRules()));
-
-        return array(
-            $v->execute(),
-            $v->getErrors()
-        );
-    }
-
-    /**
-     * Validate assignee change
-     *
-     * @access public
-     * @param  array   $values           Form values
-     * @return array   $valid, $errors   [0] = Success or not, [1] = List of errors
-     */
-    public function validateAssigneeModification(array $values)
-    {
-        $rules = array(
-            new Validators\Required('id', t('The id is required')),
-            new Validators\Required('project_id', t('The project is required')),
-            new Validators\Required('owner_id', t('This value is required')),
-        );
-
-        $v = new Validator($values, array_merge($rules, $this->commonValidationRules()));
-
-        return array(
-            $v->execute(),
-            $v->getErrors()
-        );
-    }
-
-    /**
-     * Validate category change
-     *
-     * @access public
-     * @param  array   $values           Form values
-     * @return array   $valid, $errors   [0] = Success or not, [1] = List of errors
-     */
-    public function validateCategoryModification(array $values)
-    {
-        $rules = array(
-            new Validators\Required('id', t('The id is required')),
-            new Validators\Required('project_id', t('The project is required')),
-            new Validators\Required('category_id', t('This value is required')),
-
         );
 
         $v = new Validator($values, array_merge($rules, $this->commonValidationRules()));
