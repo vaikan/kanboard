@@ -35,8 +35,9 @@ class ActionCreationController extends BaseController
     {
         $project = $this->getProject();
         $values = $this->request->getValues();
+        $values['project_id'] = $project['id'];
 
-        if (empty($values['action_name']) || empty($values['project_id'])) {
+        if (empty($values['action_name'])) {
             return $this->create();
         }
 
@@ -57,9 +58,11 @@ class ActionCreationController extends BaseController
     {
         $project = $this->getProject();
         $values = $this->request->getValues();
+        $values['project_id'] = $project['id'];
 
-        if (empty($values['action_name']) || empty($values['project_id']) || empty($values['event_name'])) {
-            return $this->create();
+        if (empty($values['action_name']) || empty($values['event_name'])) {
+            $this->create();
+            return;
         }
 
         $action = $this->actionManager->getAction($values['action_name']);
@@ -72,7 +75,7 @@ class ActionCreationController extends BaseController
         $projects_list = $this->projectUserRoleModel->getActiveProjectsByUser($this->userSession->getId());
         unset($projects_list[$project['id']]);
 
-        return $this->response->html($this->template->render('action_creation/params', array(
+        $this->response->html($this->template->render('action_creation/params', array(
             'values' => $values,
             'action_params' => $action_params,
             'columns_list' => $this->columnModel->getList($project['id']),
@@ -108,6 +111,7 @@ class ActionCreationController extends BaseController
      */
     private function doCreation(array $project, array $values)
     {
+        $values['project_id'] = $project['id'];
         list($valid, ) = $this->actionValidator->validateCreation($values);
 
         if ($valid) {

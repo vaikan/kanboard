@@ -38,7 +38,6 @@ class TaskEventJob extends BaseJob
      * @param  array  $changes
      * @param  array  $values
      * @param  array  $task
-     * @return $this
      */
     public function execute($taskId, array $eventNames, array $changes = array(), array $values = array(), array $task = array())
     {
@@ -69,7 +68,8 @@ class TaskEventJob extends BaseJob
         $this->dispatcher->dispatch($eventName, $event);
 
         if ($eventName === TaskModel::EVENT_CREATE) {
-            $this->userMentionModel->fireEvents($event['task']['description'], TaskModel::EVENT_USER_MENTION, $event);
+            $userMentionJob = $this->userMentionJob->withParams($event['task']['description'], TaskModel::EVENT_USER_MENTION, $event);
+            $this->queueManager->push($userMentionJob);
         }
     }
 }

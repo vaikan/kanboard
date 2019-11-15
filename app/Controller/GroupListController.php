@@ -2,6 +2,9 @@
 
 namespace Kanboard\Controller;
 
+use Kanboard\Model\GroupModel;
+use Kanboard\Model\UserModel;
+
 /**
  * Group Controller
  *
@@ -17,16 +20,26 @@ class GroupListController extends BaseController
      */
     public function index()
     {
+        $search = $this->request->getStringParam('search');
+        $query = $this->groupModel->getQuery();
+
+        if ($search !== '') {
+            $query->ilike('groups.name', '%'.$search.'%');
+        }
+
         $paginator = $this->paginator
             ->setUrl('GroupListController', 'index')
             ->setMax(30)
-            ->setOrder('name')
-            ->setQuery($this->groupModel->getQuery())
+            ->setOrder(GroupModel::TABLE.'.name')
+            ->setQuery($query)
             ->calculate();
 
         $this->response->html($this->helper->layout->app('group/index', array(
             'title' => t('Groups').' ('.$paginator->getTotal().')',
             'paginator' => $paginator,
+            'values' => array(
+                'search' => $search
+            ),
         )));
     }
 
@@ -43,7 +56,7 @@ class GroupListController extends BaseController
         $paginator = $this->paginator
             ->setUrl('GroupListController', 'users', array('group_id' => $group_id))
             ->setMax(30)
-            ->setOrder('username')
+            ->setOrder(UserModel::TABLE.'.username')
             ->setQuery($this->groupMemberModel->getQuery($group_id))
             ->calculate();
 

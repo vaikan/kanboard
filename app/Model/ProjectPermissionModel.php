@@ -62,35 +62,53 @@ class ProjectPermissionModel extends Base
             ->withFilter(new ProjectUserRoleProjectFilter($project_id))
             ->withFilter(new ProjectUserRoleUsernameFilter($input))
             ->getQuery()
-            ->findAllByColumn('username');
+            ->columns(
+                UserModel::TABLE.'.id',
+                UserModel::TABLE.'.username',
+                UserModel::TABLE.'.name',
+                UserModel::TABLE.'.email',
+                UserModel::TABLE.'.avatar_path'
+            )
+            ->findAll();
 
         $groupMembers = $this->projectGroupRoleQuery
             ->withFilter(new ProjectGroupRoleProjectFilter($project_id))
             ->withFilter(new ProjectGroupRoleUsernameFilter($input))
             ->getQuery()
-            ->findAllByColumn('username');
+            ->columns(
+                UserModel::TABLE.'.id',
+                UserModel::TABLE.'.username',
+                UserModel::TABLE.'.name',
+                UserModel::TABLE.'.email',
+                UserModel::TABLE.'.avatar_path'
+            )
+            ->findAll();
 
-        $members = array_unique(array_merge($userMembers, $groupMembers));
+        $userMembers = array_column_index_unique($userMembers, 'username');
+        $groupMembers = array_column_index_unique($groupMembers, 'username');
+        $members = array_merge($userMembers, $groupMembers);
 
-        sort($members);
+        ksort($members);
 
         return $members;
     }
 
-    /**
-     * Return true if everybody is allowed for the project
-     *
-     * @access public
-     * @param  integer   $project_id   Project id
-     * @return bool
-     */
-    public function isEverybodyAllowed($project_id)
+    public function getMembers($project_id)
     {
-        return $this->db
-                    ->table(ProjectModel::TABLE)
-                    ->eq('id', $project_id)
-                    ->eq('is_everybody_allowed', 1)
-                    ->exists();
+        $userMembers = $this->projectUserRoleModel->getUsers($project_id);
+        $groupMembers = $this->projectGroupRoleModel->getUsers($project_id);
+
+        $userMembers = array_column_index_unique($userMembers, 'username');
+        $groupMembers = array_column_index_unique($groupMembers, 'username');
+        return array_merge($userMembers, $groupMembers);
+    }
+
+    public function getMembersWithEmail($project_id)
+    {
+        $members = $this->getMembers($project_id);
+        return array_filter($members, function (array $user) {
+            return ! empty($user['email']);
+        });
     }
 
     /**
@@ -122,8 +140,13 @@ class ProjectPermissionModel extends Base
      */
     public function isAssignable($project_id, $user_id)
     {
-        return $this->userModel->isActive($user_id) &&
-            in_array($this->projectUserRoleModel->getUserRole($project_id, $user_id), array(Role::PROJECT_MEMBER, Role::PROJECT_MANAGER));
+        if ($this->userModel->isActive($user_id)) {
+            $role = $this->projectUserRoleModel->getUserRole($project_id, $user_id);
+
+            return ! empty($role) && $role !== Role::PROJECT_VIEWER;
+        }
+
+        return false;
     }
 
     /**

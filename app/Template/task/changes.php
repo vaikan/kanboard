@@ -31,7 +31,7 @@
                     if (empty($task['date_due'])) {
                         echo '<li>'.t('The due date have been removed').'</li>';
                     } else {
-                        echo '<li>'.t('New due date: ').$this->dt->date($task['date_due']).'</li>';
+                        echo '<li>'.t('New due date: ').$this->dt->datetime($task['date_due']).'</li>';
                     }
                     break;
                 case 'description':
@@ -69,6 +69,10 @@
 
     <?php if (! empty($changes['description'])): ?>
         <p><strong><?= t('The description has been modified:') ?></strong></p>
-        <div class="markdown"><?= $this->text->markdown($task['description']) ?></div>
+        <?php if (isset($public)): ?>
+            <div class="markdown"><?= $this->text->markdown($task['description'], true) ?></div>
+        <?php else: ?>
+            <div class="markdown"><?= $this->text->markdown($task['description']) ?></div>
+        <?php endif ?>
     <?php endif ?>
 <?php endif ?>

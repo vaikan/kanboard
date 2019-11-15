@@ -59,26 +59,11 @@ class TaskFinderModel extends Base
      */
     public function getUserQuery($user_id)
     {
-        return $this->db
-                    ->table(TaskModel::TABLE)
-                    ->columns(
-                        TaskModel::TABLE.'.id',
-                        TaskModel::TABLE.'.title',
-                        TaskModel::TABLE.'.date_due',
-                        TaskModel::TABLE.'.date_creation',
-                        TaskModel::TABLE.'.project_id',
-                        TaskModel::TABLE.'.color_id',
-                        TaskModel::TABLE.'.priority',
-                        TaskModel::TABLE.'.time_spent',
-                        TaskModel::TABLE.'.time_estimated',
-                        TaskModel::TABLE.'.is_active',
-                        TaskModel::TABLE.'.creator_id',
-                        ProjectModel::TABLE.'.name AS project_name',
-                        ColumnModel::TABLE.'.title AS column_title'
-                    )
-                    ->join(ProjectModel::TABLE, 'id', 'project_id')
-                    ->join(ColumnModel::TABLE, 'id', 'column_id')
+        return $this->getExtendedQuery()
+                    ->beginOr()
                     ->eq(TaskModel::TABLE.'.owner_id', $user_id)
+                    ->addCondition(TaskModel::TABLE.".id IN (SELECT task_id FROM ".SubtaskModel::TABLE." WHERE ".SubtaskModel::TABLE.".user_id='$user_id')")
+                    ->closeOr()
                     ->eq(TaskModel::TABLE.'.is_active', TaskModel::STATUS_OPEN)
                     ->eq(ProjectModel::TABLE.'.is_active', ProjectModel::ACTIVE)
                     ->eq(ColumnModel::TABLE.'.hide_in_dashboard', 0);
@@ -132,16 +117,17 @@ class TaskFinderModel extends Base
                 TaskModel::TABLE.'.recurrence_child',
                 TaskModel::TABLE.'.time_estimated',
                 TaskModel::TABLE.'.time_spent',
+                TaskModel::TABLE.'.reference',
                 UserModel::TABLE.'.username AS assignee_username',
                 UserModel::TABLE.'.name AS assignee_name',
                 UserModel::TABLE.'.email AS assignee_email',
                 UserModel::TABLE.'.avatar_path AS assignee_avatar_path',
                 CategoryModel::TABLE.'.name AS category_name',
                 CategoryModel::TABLE.'.description AS category_description',
+                CategoryModel::TABLE.'.color_id AS category_color_id',
                 ColumnModel::TABLE.'.title AS column_name',
                 ColumnModel::TABLE.'.position AS column_position',
                 SwimlaneModel::TABLE.'.name AS swimlane_name',
-                ProjectModel::TABLE.'.default_swimlane',
                 ProjectModel::TABLE.'.name AS project_name'
             )
             ->join(UserModel::TABLE, 'id', 'owner_id', TaskModel::TABLE)
@@ -213,7 +199,7 @@ class TaskFinderModel extends Base
                     ->eq(ProjectModel::TABLE.'.is_active', 1)
                     ->eq(TaskModel::TABLE.'.is_active', 1)
                     ->neq(TaskModel::TABLE.'.date_due', 0)
-                    ->lte(TaskModel::TABLE.'.date_due', mktime(23, 59, 59));
+                    ->lte(TaskModel::TABLE.'.date_due', time());
     }
 
     /**
@@ -303,15 +289,13 @@ class TaskFinderModel extends Base
                 CategoryModel::TABLE.'.name AS category_name',
                 SwimlaneModel::TABLE.'.name AS swimlane_name',
                 ProjectModel::TABLE.'.name AS project_name',
-                ProjectModel::TABLE.'.default_swimlane',
                 ColumnModel::TABLE.'.title AS column_title',
                 UserModel::TABLE.'.username AS assignee_username',
                 UserModel::TABLE.'.name AS assignee_name',
                 'uc.username AS creator_username',
                 'uc.name AS creator_name',
                 CategoryModel::TABLE.'.description AS category_description',
-                ColumnModel::TABLE.'.position AS column_position',
-                ProjectModel::TABLE.'.default_swimlane'
+                ColumnModel::TABLE.'.position AS column_position'
             )
             ->join(UserModel::TABLE, 'id', 'owner_id', TaskModel::TABLE)
             ->left(UserModel::TABLE, 'uc', 'id', TaskModel::TABLE, 'creator_id')
@@ -366,17 +350,18 @@ class TaskFinderModel extends Base
      * Count the number of tasks for a given column and status
      *
      * @access public
-     * @param  integer   $project_id   Project id
-     * @param  integer   $column_id    Column id
-     * @return integer
+     * @param  integer $project_id Project id
+     * @param  integer $column_id Column id
+     * @param  array   $status
+     * @return int
      */
-    public function countByColumnId($project_id, $column_id)
+    public function countByColumnId($project_id, $column_id, array $status = array(TaskModel::STATUS_OPEN))
     {
         return $this->db
                     ->table(TaskModel::TABLE)
                     ->eq('project_id', $project_id)
                     ->eq('column_id', $column_id)
-                    ->eq('is_active', 1)
+                    ->in('is_active', $status)
                     ->count();
     }
 

@@ -4,6 +4,7 @@
 .project
 /.settings/
 .idea
+/nbproject/
 .DS_Store
 ehthumbs.db
 Icon?
@@ -14,11 +15,10 @@ Thumbs.db
 *.out
 *.log
 .vagrant
-config.php
 data/files
 data/cache
-/vendor
+data/config.php
 *.bak
-!docker/kanboard/config.php
+/config.php
+!docker/var/wwww/app/config.php
 node_modules
-bower_components

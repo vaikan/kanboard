@@ -36,7 +36,6 @@ class RouteProvider implements ServiceProviderInterface
             $container['route']->addRoute('dashboard/:user_id/projects', 'DashboardController', 'projects');
             $container['route']->addRoute('dashboard/:user_id/tasks', 'DashboardController', 'tasks');
             $container['route']->addRoute('dashboard/:user_id/subtasks', 'DashboardController', 'subtasks');
-            $container['route']->addRoute('dashboard/:user_id/calendar', 'DashboardController', 'calendar');
             $container['route']->addRoute('dashboard/:user_id/activity', 'DashboardController', 'activity');
             $container['route']->addRoute('dashboard/:user_id/notifications', 'DashboardController', 'notifications');
 
@@ -65,10 +64,7 @@ class RouteProvider implements ServiceProviderInterface
             $container['route']->addRoute('project/:project_id/overview', 'ProjectOverviewController', 'show');
 
             // ProjectEdit routes
-            $container['route']->addRoute('project/:project_id/edit', 'ProjectEditController', 'edit');
-            $container['route']->addRoute('project/:project_id/edit/dates', 'ProjectEditController', 'dates');
-            $container['route']->addRoute('project/:project_id/edit/description', 'ProjectEditController', 'description');
-            $container['route']->addRoute('project/:project_id/edit/priority', 'ProjectEditController', 'priority');
+            $container['route']->addRoute('project/:project_id/edit', 'ProjectEditController', 'show');
 
             // ProjectUser routes
             $container['route']->addRoute('projects/managers/:user_id', 'ProjectUserOverviewController', 'managers');
@@ -109,8 +105,8 @@ class RouteProvider implements ServiceProviderInterface
             $container['route']->addRoute('export/summary/:project_id', 'ExportController', 'summary');
 
             // Analytics routes
-            $container['route']->addRoute('analytics/tasks/:project_id', 'AnalyticController', 'tasks');
-            $container['route']->addRoute('analytics/users/:project_id', 'AnalyticController', 'users');
+            $container['route']->addRoute('analytics/tasks/:project_id', 'AnalyticController', 'taskDistribution');
+            $container['route']->addRoute('analytics/users/:project_id', 'AnalyticController', 'userDistribution');
             $container['route']->addRoute('analytics/cfd/:project_id', 'AnalyticController', 'cfd');
             $container['route']->addRoute('analytics/burndown/:project_id', 'AnalyticController', 'burndown');
             $container['route']->addRoute('analytics/average-time-column/:project_id', 'AnalyticController', 'averageTimeByColumn');
@@ -122,17 +118,9 @@ class RouteProvider implements ServiceProviderInterface
             $container['route']->addRoute('b/:project_id', 'BoardViewController', 'show');
             $container['route']->addRoute('public/board/:token', 'BoardViewController', 'readonly');
 
-            // Calendar routes
-            $container['route']->addRoute('calendar/:project_id', 'CalendarController', 'show');
-            $container['route']->addRoute('c/:project_id', 'CalendarController', 'show');
-
             // Listing routes
             $container['route']->addRoute('list/:project_id', 'TaskListController', 'show');
             $container['route']->addRoute('l/:project_id', 'TaskListController', 'show');
-
-            // Gantt routes
-            $container['route']->addRoute('gantt/:project_id', 'TaskGanttController', 'show');
-            $container['route']->addRoute('gantt/:project_id/sort/:sorting', 'TaskGanttController', 'show');
 
             // Feed routes
             $container['route']->addRoute('feed/project/:token', 'FeedController', 'project');
@@ -158,6 +146,7 @@ class RouteProvider implements ServiceProviderInterface
             $container['route']->addRoute('user/:user_id/authentication', 'UserCredentialController', 'changeAuthentication');
             $container['route']->addRoute('user/:user_id/2fa', 'TwoFactorController', 'index');
             $container['route']->addRoute('user/:user_id/avatar', 'AvatarFileController', 'show');
+            $container['route']->addRoute('user/:user_id/api', 'UserApiAccessController', 'show');
 
             // Groups
             $container['route']->addRoute('groups', 'GroupListController', 'index');
@@ -169,7 +158,6 @@ class RouteProvider implements ServiceProviderInterface
             $container['route']->addRoute('settings/project', 'ConfigController', 'project');
             $container['route']->addRoute('settings/project', 'ConfigController', 'project');
             $container['route']->addRoute('settings/board', 'ConfigController', 'board');
-            $container['route']->addRoute('settings/calendar', 'ConfigController', 'calendar');
             $container['route']->addRoute('settings/integrations', 'ConfigController', 'integrations');
             $container['route']->addRoute('settings/webhook', 'ConfigController', 'webhook');
             $container['route']->addRoute('settings/api', 'ConfigController', 'api');
@@ -192,6 +180,9 @@ class RouteProvider implements ServiceProviderInterface
             // PasswordReset
             $container['route']->addRoute('forgot-password', 'PasswordResetController', 'create');
             $container['route']->addRoute('forgot-password/change/:token', 'PasswordResetController', 'change');
+
+            // Cronjob
+            $container['route']->addRoute('cronjob', 'CronjobController', 'run');
         }
 
         return $container;

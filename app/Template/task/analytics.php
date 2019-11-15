@@ -9,15 +9,20 @@
     <h2><?= t('Analytics') ?></h2>
 </div>
 
-<div class="listing">
+<div class="panel">
     <ul>
         <li><?= t('Lead time: ').'<strong>'.$this->dt->duration($lead_time) ?></strong></li>
         <li><?= t('Cycle time: ').'<strong>'.$this->dt->duration($cycle_time) ?></strong></li>
     </ul>
 </div>
 
-<h3 id="analytic-task-time-column"><?= t('Time spent into each column') ?></h3>
-<div id="chart" data-metrics='<?= json_encode($time_spent_columns, JSON_HEX_APOS) ?>' data-label="<?= t('Time spent') ?>"></div>
+<h3><?= t('Time spent in each column') ?></h3>
+
+<?= $this->app->component('chart-task-time-column', array(
+    'metrics' => $time_spent_columns,
+    'label' => t('Time spent'),
+)) ?>
+
 <table class="table-striped">
     <tr>
         <th><?= t('Column') ?></th>

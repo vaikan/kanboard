@@ -27,7 +27,9 @@ class GroupModel extends Base
      */
     public function getQuery()
     {
-        return $this->db->table(self::TABLE);
+        return $this->db->table(self::TABLE)
+            ->columns('id', 'name', 'external_id')
+            ->subquery('SELECT COUNT(*) FROM '.GroupMemberModel::TABLE.' WHERE group_id='.self::TABLE.'.id', 'nb_users');
     }
 
     /**
@@ -39,19 +41,35 @@ class GroupModel extends Base
      */
     public function getById($group_id)
     {
-        return $this->getQuery()->eq('id', $group_id)->findOne();
+        return $this->db->table(self::TABLE)->eq('id', $group_id)->findOne();
     }
 
     /**
-     * Get a specific group by external id
+     * Get a specific group by externalID
      *
      * @access public
-     * @param  integer $external_id
+     * @param  string $external_id
      * @return array
      */
     public function getByExternalId($external_id)
     {
-        return $this->getQuery()->eq('external_id', $external_id)->findOne();
+        return $this->db->table(self::TABLE)->eq('external_id', $external_id)->findOne();
+    }
+
+    /**
+     * Get specific groups by externalIDs
+     *
+     * @access public
+     * @param  string[] $external_ids
+     * @return array
+     */
+    public function getByExternalIds(array $external_ids)
+    {
+        if (empty($external_ids)) {
+            return [];
+        }
+
+        return $this->db->table(self::TABLE)->in('external_id', $external_ids)->findAll();
     }
 
     /**

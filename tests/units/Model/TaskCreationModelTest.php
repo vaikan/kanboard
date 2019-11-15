@@ -159,7 +159,7 @@ class TaskCreationModelTest extends Base
         $taskCreationModel = new TaskCreationModel($this->container);
         $taskFinderModel = new TaskFinderModel($this->container);
 
-        $this->container['sessionStorage']->user = array('id' => 1);
+        $_SESSION['user'] = array('id' => 1);
 
         $this->assertEquals(1, $projectModel->create(array('name' => 'test')));
         $this->assertEquals(1, $taskCreationModel->create(array('project_id' => 1, 'title' => 'test')));
@@ -248,7 +248,7 @@ class TaskCreationModelTest extends Base
 
     public function testDateDue()
     {
-        $date = '2014-11-23';
+        $date = '2014-11-23 14:30';
         $timestamp = strtotime('+2days');
         $projectModel = new ProjectModel($this->container);
         $taskCreationModel = new TaskCreationModel($this->container);
@@ -262,12 +262,12 @@ class TaskCreationModelTest extends Base
         $task = $taskFinderModel->getById(1);
         $this->assertNotEmpty($task);
         $this->assertEquals(1, $task['id']);
-        $this->assertEquals($date, date('Y-m-d', $task['date_due']));
+        $this->assertEquals($date, date('Y-m-d H:i', $task['date_due']));
 
         $task = $taskFinderModel->getById(2);
         $this->assertNotEmpty($task);
         $this->assertEquals(2, $task['id']);
-        $this->assertEquals(date('Y-m-d 00:00', $timestamp), date('Y-m-d 00:00', $task['date_due']));
+        $this->assertEquals(date('Y-m-d H:i', $timestamp), date('Y-m-d H:i', $task['date_due']));
 
         $task = $taskFinderModel->getById(3);
         $this->assertEquals(3, $task['id']);
@@ -398,6 +398,6 @@ class TaskCreationModelTest extends Base
 
         $task = $taskFinderModel->getById(1);
         $this->assertNotEmpty($task);
-        $this->assertEquals('2050-01-10 00:00', date('Y-m-d H:i', $task['date_due']));
+        $this->assertEquals('2050-01-10 12:30', date('Y-m-d H:i', $task['date_due']));
     }
 }

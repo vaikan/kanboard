@@ -24,8 +24,8 @@ class UserValidator extends BaseValidator
     {
         return array(
             new Validators\MaxLength('role', t('The maximum length is %d characters', 25), 25),
-            new Validators\MaxLength('username', t('The maximum length is %d characters', 50), 50),
-            new Validators\Unique('username', t('The username must be unique'), $this->db->getConnection(), UserModel::TABLE, 'id'),
+            new Validators\MaxLength('username', t('The maximum length is %d characters', 191), 191),
+            new Validators\Unique('username', t('This username is already taken'), $this->db->getConnection(), UserModel::TABLE, 'id'),
             new Validators\Email('email', t('Email address invalid')),
             new Validators\Integer('is_ldap_user', t('This value must be an integer')),
         );
@@ -116,6 +116,10 @@ class UserValidator extends BaseValidator
         $v = new Validator($values, array_merge($rules, $this->commonPasswordValidationRules()));
 
         if ($v->execute()) {
+            if (! $this->userSession->isAdmin() && $values['id'] != $this->userSession->getId()) {
+                return array(false, array('current_password' => array('Invalid User ID')));
+            }
+
             if ($this->authenticationManager->passwordAuthentication($this->userSession->getUsername(), $values['current_password'], false)) {
                 return array(true, array());
             } else {

@@ -2,8 +2,7 @@
     <h2><?= t('Project tags') ?></h2>
     <ul>
         <li>
-            <i class="fa fa-plus" aria-hidden="true"></i>
-            <?= $this->url->link(t('Add new tag'), 'ProjectTagController', 'create', array('project_id' => $project['id']), false, 'popover') ?>
+            <?= $this->modal->medium('plus', t('Add new tag'), 'ProjectTagController', 'create', array('project_id' => $project['id'])) ?>
         </li>
     </ul>
 </div>
@@ -13,17 +12,23 @@
 <?php else: ?>
     <table class="table-striped table-scrolling">
         <tr>
-            <th class="column-80"><?= t('Tag') ?></th>
-            <th><?= t('Action') ?></th>
+            <th><?= t('Tag') ?></th>
         </tr>
         <?php foreach ($tags as $tag): ?>
             <tr>
-                <td><?= $this->text->e($tag['name']) ?></td>
                 <td>
-                    <i class="fa fa-times" aria-hidden="true"></i>
-                    <?= $this->url->link(t('Remove'), 'ProjectTagController', 'confirm', array('tag_id' => $tag['id'], 'project_id' => $project['id']), false, 'popover') ?>
-                    <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
-                    <?= $this->url->link(t('Edit'), 'ProjectTagController', 'edit', array('tag_id' => $tag['id'], 'project_id' => $project['id']), false, 'popover') ?>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-menu dropdown-menu-link-icon"><i class="fa fa-cog"></i><i class="fa fa-caret-down"></i></a>
+                        <ul>
+                            <li>
+                                <?= $this->modal->medium('edit', t('Edit'), 'ProjectTagController', 'edit', array('tag_id' => $tag['id'], 'project_id' => $project['id'])) ?>
+                            </li>
+                            <li>
+                                <?= $this->modal->confirm('trash-o', t('Remove'), 'ProjectTagController', 'confirm', array('tag_id' => $tag['id'], 'project_id' => $project['id'])) ?>
+                            </li>
+                        </ul>
+                    </div>
+                    <?= $this->text->e($tag['name']) ?>
                 </td>
             </tr>
         <?php endforeach ?>

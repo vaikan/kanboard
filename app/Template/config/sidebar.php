@@ -15,17 +15,14 @@
         <li <?= $this->app->checkMenuSelection('ConfigController', 'board') ?>>
             <?= $this->url->link(t('Board settings'), 'ConfigController', 'board') ?>
         </li>
-        <li <?= $this->app->checkMenuSelection('ConfigController', 'calendar') ?>>
-            <?= $this->url->link(t('Calendar settings'), 'ConfigController', 'calendar') ?>
-        </li>
         <li <?= $this->app->checkMenuSelection('TagController', 'index') ?>>
             <?= $this->url->link(t('Tags management'), 'TagController', 'index') ?>
         </li>
         <li <?= $this->app->checkMenuSelection('LinkController') ?>>
-            <?= $this->url->link(t('Link settings'), 'LinkController', 'index') ?>
+            <?= $this->url->link(t('Link labels'), 'LinkController', 'show') ?>
         </li>
-        <li <?= $this->app->checkMenuSelection('CurrencyController', 'index') ?>>
-            <?= $this->url->link(t('Currency rates'), 'CurrencyController', 'index') ?>
+        <li <?= $this->app->checkMenuSelection('CurrencyController') ?>>
+            <?= $this->url->link(t('Currency rates'), 'CurrencyController', 'show') ?>
         </li>
         <li <?= $this->app->checkMenuSelection('ConfigController', 'integrations') ?>>
             <?= $this->url->link(t('Integrations'), 'ConfigController', 'integrations') ?>

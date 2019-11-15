@@ -49,7 +49,7 @@
                 <li <?= $this->app->checkMenuSelection('UserModificationController', 'show') ?>>
                     <?= $this->url->link(t('Edit profile'), 'UserModificationController', 'show', array('user_id' => $user['id'])) ?>
                 </li>
-                <li <?= $this->app->checkMenuSelection('AvatarFile') ?>>
+                <li <?= $this->app->checkMenuSelection('AvatarFileController') ?>>
                     <?= $this->url->link(t('Avatar'), 'AvatarFileController', 'show', array('user_id' => $user['id'])) ?>
                 </li>
             <?php endif ?>
@@ -88,6 +88,11 @@
             <?php if ($this->user->hasAccess('UserViewController', 'integrations')): ?>
                 <li <?= $this->app->checkMenuSelection('UserViewController', 'integrations') ?>>
                     <?= $this->url->link(t('Integrations'), 'UserViewController', 'integrations', array('user_id' => $user['id'])) ?>
+                </li>
+            <?php endif ?>
+            <?php if ($this->user->hasAccess('UserApiAccessController', 'show')): ?>
+                <li <?= $this->app->checkMenuSelection('UserApiAccessController', 'show') ?>>
+                    <?= $this->url->link(t('API'), 'UserApiAccessController', 'show', array('user_id' => $user['id'])) ?>
                 </li>
             <?php endif ?>
         <?php endif ?>

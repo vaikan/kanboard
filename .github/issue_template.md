@@ -1,26 +1,3 @@
-### Expected behaviour
+This issue tracker is **only** for bug report. Use the forum for everything else: https://kanboard.discourse.group/
 
-Tell us what should happen
-
-
-### Actual behaviour
-
-Tell us what happens instead
-
-
-### Steps to reproduce
-
-1.
-2.
-3.
-
-
-### Configuration
-
-Copy and paste the configuration section from the Kanboard settings page or fill these fields:
-
-- Kanboard version:
-- Database type and version:
-- PHP version:
-- OS:
-- Browser:
+Your issue will be automatically closed by a bot if you don't follow this directive.

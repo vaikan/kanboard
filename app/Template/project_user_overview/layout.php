@@ -1,20 +1,22 @@
 <section id="main">
     <div class="page-header">
         <ul>
-            <li>
-                <i class="fa fa-folder fa-fw"></i>
-                <?= $this->url->link(t('Projects list'), 'ProjectListController', 'show') ?>
-            </li>
-            <?php if ($this->user->hasAccess('ProjectGanttController', 'show')): ?>
+            <?php if ($this->user->hasAccess('ProjectCreationController', 'create')): ?>
                 <li>
-                    <i class="fa fa-sliders fa-fw"></i>
-                    <?= $this->url->link(t('Projects Gantt chart'), 'ProjectGanttController', 'show') ?>
+                    <?= $this->modal->medium('plus', t('New project'), 'ProjectCreationController', 'create') ?>
                 </li>
             <?php endif ?>
+            <?php if ($this->app->config('disable_private_project', 0) == 0): ?>
+                <li>
+                    <?= $this->modal->medium('lock', t('New private project'), 'ProjectCreationController', 'createPrivate') ?>
+                </li>
+            <?php endif ?>
+            <li>
+                <?= $this->url->icon('folder', t('Projects list'), 'ProjectListController', 'show') ?>
+            </li>
         </ul>
     </div>
     <section class="sidebar-container">
-
         <?= $this->render($sidebar_template, array('users' => $users, 'filter' => $filter)) ?>
 
         <div class="sidebar-content">

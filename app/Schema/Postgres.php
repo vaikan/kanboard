@@ -2,11 +2,211 @@
 
 namespace Schema;
 
+require_once __DIR__.'/Migration.php';
+
 use PDO;
 use Kanboard\Core\Security\Token;
 use Kanboard\Core\Security\Role;
 
-const VERSION = 91;
+const VERSION = 111;
+
+function version_111(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "tags" ADD COLUMN "color_id" VARCHAR(50) DEFAULT NULL');
+}
+
+function version_110(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "project_has_categories" ADD COLUMN "color_id" VARCHAR(50) DEFAULT NULL');
+}
+
+function version_109(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "users" ALTER COLUMN "language" TYPE VARCHAR(11)');
+}
+
+function version_108(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "projects" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "projects" ALTER COLUMN "email" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "action_has_params" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "action_has_params" ALTER COLUMN "value" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "actions" ALTER COLUMN "event_name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "actions" ALTER COLUMN "action_name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "comments" ALTER COLUMN "reference" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "custom_filters" ALTER COLUMN "filter" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "custom_filters" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "groups" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "project_activities" ALTER COLUMN "event_name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "project_has_files" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "project_has_files" ALTER COLUMN "path" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "subtasks" ALTER COLUMN "title" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "swimlanes" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "task_has_external_links" ALTER COLUMN "title" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "task_has_external_links" ALTER COLUMN "url" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "task_has_files" ALTER COLUMN "name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "task_has_files" ALTER COLUMN "path" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "tasks" ALTER COLUMN "title" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "tasks" ALTER COLUMN "reference" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "user_has_unread_notifications" ALTER COLUMN "event_name" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "users" ALTER COLUMN "username" TYPE TEXT');
+    $pdo->exec('ALTER TABLE "users" ALTER COLUMN "filter" TYPE TEXT');
+}
+
+function version_107(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "users" ADD COLUMN filter VARCHAR(255) DEFAULT NULL');
+}
+
+function version_106(PDO $pdo)
+{
+    $pdo->exec("CREATE TABLE sessions (
+        id TEXT PRIMARY KEY,
+        expire_at INTEGER NOT NULL,
+        data TEXT DEFAULT ''
+    )");
+}
+
+function version_105(PDO $pdo)
+{
+    $pdo->exec('CREATE TABLE predefined_task_descriptions (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+    )');
+}
+
+function version_104(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE projects DROP COLUMN is_everybody_allowed');
+}
+
+function version_103(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE projects ADD COLUMN predefined_email_subjects TEXT');
+}
+
+function version_102(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE column_has_move_restrictions ADD COLUMN only_assigned BOOLEAN DEFAULT FALSE');
+}
+
+function version_101(PDO $pdo)
+{
+    migrate_default_swimlane($pdo);
+
+    $pdo->exec('ALTER TABLE "projects" DROP COLUMN "default_swimlane"');
+    $pdo->exec('ALTER TABLE "projects" DROP COLUMN "show_default_swimlane"');
+    $pdo->exec('ALTER TABLE "tasks" ALTER COLUMN "swimlane_id" SET NOT NULL');
+    $pdo->exec('ALTER TABLE "tasks" ALTER COLUMN "swimlane_id" DROP DEFAULT');
+    $pdo->exec('ALTER TABLE "tasks" ADD FOREIGN KEY (swimlane_id) REFERENCES swimlanes ON DELETE CASCADE');
+}
+
+function version_100(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "projects" ADD COLUMN email VARCHAR(255)');
+}
+
+function version_99(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE invites (
+            email VARCHAR(255) NOT NULL,
+            project_id INTEGER NOT NULL,
+            token VARCHAR(255) NOT NULL,
+            PRIMARY KEY(email, token)
+        )
+    ");
+
+    $pdo->exec("DELETE FROM settings WHERE \"option\"='application_datetime_format'");
+}
+
+function version_98(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "comments" ADD COLUMN date_modification BIGINT');
+    $pdo->exec('UPDATE "comments" SET date_modification = date_creation WHERE date_modification IS NULL');
+}
+
+function version_97(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "users" ADD COLUMN api_access_token VARCHAR(255) DEFAULT NULL');
+}
+
+function version_96(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "settings" ALTER COLUMN "value" TYPE TEXT');
+}
+
+function version_95(PDO $pdo)
+{
+    $pdo->exec("ALTER TABLE tasks ADD COLUMN external_provider VARCHAR(255)");
+    $pdo->exec("ALTER TABLE tasks ADD COLUMN external_uri VARCHAR(255)");
+}
+
+function version_94(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE column_has_restrictions (
+            restriction_id SERIAL PRIMARY KEY,
+            project_id INTEGER NOT NULL,
+            role_id INTEGER NOT NULL,
+            column_id INTEGER NOT NULL,
+            rule VARCHAR(255) NOT NULL,
+            UNIQUE(role_id, column_id, rule),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(role_id) REFERENCES project_has_roles(role_id) ON DELETE CASCADE,
+            FOREIGN KEY(column_id) REFERENCES columns(id) ON DELETE CASCADE
+        )
+    ");
+}
+
+function version_93(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE project_role_has_restrictions (
+            restriction_id SERIAL PRIMARY KEY,
+            project_id INTEGER NOT NULL,
+            role_id INTEGER NOT NULL,
+            rule VARCHAR(255) NOT NULL,
+            UNIQUE(role_id, rule),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(role_id) REFERENCES project_has_roles(role_id) ON DELETE CASCADE
+        )
+    ");
+}
+
+function version_92(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE project_has_roles (
+            role_id SERIAL PRIMARY KEY,
+            role VARCHAR(255) NOT NULL,
+            project_id INTEGER NOT NULL,
+            UNIQUE(project_id, role),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE column_has_move_restrictions (
+            restriction_id SERIAL PRIMARY KEY,
+            project_id INTEGER NOT NULL,
+            role_id INTEGER NOT NULL,
+            src_column_id INTEGER NOT NULL,
+            dst_column_id INTEGER NOT NULL,
+            UNIQUE(role_id, src_column_id, dst_column_id),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(role_id) REFERENCES project_has_roles(role_id) ON DELETE CASCADE,
+            FOREIGN KEY(src_column_id) REFERENCES columns(id) ON DELETE CASCADE,
+            FOREIGN KEY(dst_column_id) REFERENCES columns(id) ON DELETE CASCADE
+        )
+    ");
+
+    $pdo->exec('ALTER TABLE "project_has_users" ALTER COLUMN "role" TYPE VARCHAR(255)');
+    $pdo->exec('ALTER TABLE "project_has_groups" ALTER COLUMN "role" TYPE VARCHAR(255)');
+}
 
 function version_91(PDO $pdo)
 {
@@ -153,7 +353,7 @@ function version_79(PDO $pdo)
             $row['action_name'] = '\Kanboard\Action\TaskCloseColumn';
         } elseif ($row['action_name'] === 'TaskLogMoveAnotherColumn') {
             $row['action_name'] = '\Kanboard\Action\CommentCreationMoveTaskColumn';
-        } elseif ($row['action_name']{0} !== '\\') {
+        } elseif ($row['action_name'][0] !== '\\') {
             $row['action_name'] = '\Kanboard\Action\\'.$row['action_name'];
         }
 

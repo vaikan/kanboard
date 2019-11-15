@@ -36,6 +36,9 @@ class TaskDuplicationModel extends Base
         'recurrence_factor',
         'recurrence_timeframe',
         'recurrence_basedate',
+        'external_provider',
+        'external_uri',
+        'reference',
     );
 
     /**
@@ -47,10 +50,14 @@ class TaskDuplicationModel extends Base
      */
     public function duplicate($task_id)
     {
-        $new_task_id = $this->save($task_id, $this->copyFields($task_id));
+        $values = $this->copyFields($task_id);
+        $values['title'] = t('[DUPLICATE]').' '.$values['title'];
+
+        $new_task_id = $this->save($task_id, $values);
 
         if ($new_task_id !== false) {
             $this->tagDuplicationModel->duplicateTaskTags($task_id, $new_task_id);
+            $this->taskLinkModel->create($new_task_id, $task_id, 4);
         }
 
         return $new_task_id;
@@ -79,11 +86,13 @@ class TaskDuplicationModel extends Base
         }
 
         // Check if the swimlane exists for the destination project
-        if ($values['swimlane_id'] > 0) {
-            $values['swimlane_id'] = $this->swimlaneModel->getIdByName(
-                $values['project_id'],
-                $this->swimlaneModel->getNameById($values['swimlane_id'])
-            );
+        $values['swimlane_id'] = $this->swimlaneModel->getIdByName(
+            $values['project_id'],
+            $this->swimlaneModel->getNameById($values['swimlane_id'])
+        );
+
+        if ($values['swimlane_id'] == 0) {
+            $values['swimlane_id'] = $this->swimlaneModel->getFirstActiveSwimlaneId($values['project_id']);
         }
 
         // Check if the column exists for the destination project

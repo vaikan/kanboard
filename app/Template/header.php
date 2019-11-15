@@ -15,12 +15,12 @@
     <div class="title-container">
         <?= $_title ?>
     </div>
-    <?php if (! empty($board_selector)): ?>
     <div class="board-selector-container">
-        <?= $this->render('header/board_selector', array('board_selector' => $board_selector)) ?>
+        <?php if (! empty($board_selector)): ?>
+            <?= $this->render('header/board_selector', array('board_selector' => $board_selector)) ?>
+        <?php endif ?>
     </div>
-    <?php endif ?>
-    <div class="menus-container pull-right">
+    <div class="menus-container">
         <?= $_top_right_corner ?>
     </div>
 </header>

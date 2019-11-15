@@ -7,9 +7,8 @@ use Composer\Autoload\ClassLoader;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\Debug\TraceableEventDispatcher;
 use Symfony\Component\Stopwatch\Stopwatch;
-use SimpleLogger\Logger;
+use Kanboard\Core\Log\Logger;
 use Kanboard\Core\Session\FlashMessage;
-use Kanboard\Core\Session\SessionStorage;
 use Kanboard\ServiceProvider\ActionProvider;
 
 abstract class Base extends PHPUnit_Framework_TestCase
@@ -24,6 +23,7 @@ abstract class Base extends PHPUnit_Framework_TestCase
     public function setUp()
     {
         date_default_timezone_set('UTC');
+        $_SESSION = array();
 
         if (DB_DRIVER === 'mysql') {
             $pdo = new PDO('mysql:host='.DB_HOSTNAME, DB_USERNAME, DB_PASSWORD);
@@ -47,8 +47,10 @@ abstract class Base extends PHPUnit_Framework_TestCase
         $this->container->register(new Kanboard\ServiceProvider\RouteProvider());
         $this->container->register(new Kanboard\ServiceProvider\AvatarProvider());
         $this->container->register(new Kanboard\ServiceProvider\FilterProvider());
+        $this->container->register(new Kanboard\ServiceProvider\FormatterProvider());
         $this->container->register(new Kanboard\ServiceProvider\JobProvider());
         $this->container->register(new Kanboard\ServiceProvider\QueueProvider());
+        $this->container->register(new Kanboard\ServiceProvider\ExternalTaskProvider());
 
         $this->container['dispatcher'] = new TraceableEventDispatcher(
             new EventDispatcher,
@@ -59,6 +61,7 @@ abstract class Base extends PHPUnit_Framework_TestCase
 
         $this->container['db']->getStatementHandler()->withLogging();
         $this->container['logger'] = new Logger();
+        $this->container['cli'] = new \Symfony\Component\Console\Application('Kanboard', 'test');
 
         $this->container['httpClient'] = $this
             ->getMockBuilder('\Kanboard\Core\Http\Client')
@@ -84,7 +87,6 @@ abstract class Base extends PHPUnit_Framework_TestCase
             ->setMethods(array('put', 'moveFile', 'remove', 'moveUploadedFile'))
             ->getMock();
 
-        $this->container['sessionStorage'] = new SessionStorage;
         $this->container->register(new ActionProvider);
 
         $this->container['flash'] = function ($c) {
@@ -99,5 +101,6 @@ abstract class Base extends PHPUnit_Framework_TestCase
     public function tearDown()
     {
         $this->container['db']->closeConnection();
+        unset ($this->container);
     }
 }

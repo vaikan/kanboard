@@ -34,6 +34,7 @@ class TaskEmail extends Base
         return array(
             TaskModel::EVENT_MOVE_COLUMN,
             TaskModel::EVENT_CLOSE,
+            TaskModel::EVENT_CREATE,
         );
     }
 
@@ -87,7 +88,6 @@ class TaskEmail extends Base
                 $this->getParam('subject'),
                 $this->template->render('notification/task_create', array(
                     'task' => $data['task'],
-                    'application_url' => $this->configModel->get('application_url'),
                 ))
             );
 

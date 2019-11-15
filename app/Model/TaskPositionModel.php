@@ -12,6 +12,44 @@ use Kanboard\Core\Base;
  */
 class TaskPositionModel extends Base
 {
+    public function moveBottom($project_id, $task_id, $swimlane_id, $column_id)
+    {
+        $this->db->startTransaction();
+
+        $task = $this->taskFinderModel->getById($task_id);
+
+        $result = $this->db->table(TaskModel::TABLE)
+            ->eq('project_id', $project_id)
+            ->eq('swimlane_id', $swimlane_id)
+            ->eq('column_id', $column_id)
+            ->columns('MAX(position) AS pos')
+            ->findOne();
+
+        $position = 1;
+        if (! empty($result)) {
+            $position = $result['pos'] + 1;
+        }
+
+        $result = $this->db->table(TaskModel::TABLE)
+            ->eq('id', $task_id)
+            ->eq('project_id', $project_id)
+            ->update([
+                'swimlane_id' => $swimlane_id,
+                'column_id' => $column_id,
+                'position' => $position,
+                'date_moved' => time(),
+                'date_modification' => time(),
+            ]);
+
+        $this->db->closeTransaction();
+
+        if ($result) {
+            $this->fireEvents($task, $column_id, $position, $swimlane_id);
+        }
+
+        return $result;
+    }
+
     /**
      * Move a task to another column or to another position
      *
@@ -32,6 +70,10 @@ class TaskPositionModel extends Base
         }
 
         $task = $this->taskFinderModel->getById($task_id);
+
+        if ($swimlane_id == 0) {
+            $swimlane_id = $task['swimlane_id'];
+        }
 
         if ($onlyOpen && $task['is_active'] == TaskModel::STATUS_CLOSED) {
             return true;
@@ -72,9 +114,10 @@ class TaskPositionModel extends Base
         $this->db->startTransaction();
         $r1 = $this->saveTaskPositions($project_id, $task_id, 0, $original_column_id, $original_swimlane_id);
         $r2 = $this->saveTaskPositions($project_id, $task_id, $position, $new_column_id, $new_swimlane_id);
+        $r3 = $this->saveTaskTimestamps($task_id);
         $this->db->closeTransaction();
 
-        return $r1 && $r2;
+        return $r1 && $r2 && $r3;
     }
 
     /**
@@ -94,9 +137,10 @@ class TaskPositionModel extends Base
         $this->db->startTransaction();
         $r1 = $this->saveTaskPositions($project_id, $task_id, 0, $original_column_id, $swimlane_id);
         $r2 = $this->saveTaskPositions($project_id, $task_id, $position, $new_column_id, $swimlane_id);
+        $r3 = $this->saveTaskTimestamps($task_id);
         $this->db->closeTransaction();
 
-        return $r1 && $r2;
+        return $r1 && $r2 && $r3;
     }
 
     /**
@@ -167,6 +211,18 @@ class TaskPositionModel extends Base
             return false;
         }
 
+        return true;
+    }
+
+    /**
+     * Update task timestamps
+     *
+     * @access private
+     * @param  integer $task_id
+     * @return bool
+     */
+    private function saveTaskTimestamps($task_id)
+    {
         $now = time();
 
         return $this->db->table(TaskModel::TABLE)->eq('id', $task_id)->update(array(
@@ -225,26 +281,26 @@ class TaskPositionModel extends Base
         );
 
         if ($task['swimlane_id'] != $new_swimlane_id) {
-            $this->queueManager->push($this->taskEventJob->withParams(
+            $this->taskEventJob->execute(
                 $task['id'],
                 array(TaskModel::EVENT_MOVE_SWIMLANE),
                 $changes,
                 $changes
-            ));
+            );
         } elseif ($task['column_id'] != $new_column_id) {
-            $this->queueManager->push($this->taskEventJob->withParams(
+            $this->taskEventJob->execute(
                 $task['id'],
                 array(TaskModel::EVENT_MOVE_COLUMN),
                 $changes,
                 $changes
-            ));
+            );
         } elseif ($task['position'] != $new_position) {
-            $this->queueManager->push($this->taskEventJob->withParams(
+            $this->taskEventJob->execute(
                 $task['id'],
                 array(TaskModel::EVENT_MOVE_POSITION),
                 $changes,
                 $changes
-            ));
+            );
         }
     }
 }

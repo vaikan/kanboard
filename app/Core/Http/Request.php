@@ -105,10 +105,21 @@ class Request extends Base
     {
         if (! empty($this->post) && ! empty($this->post['csrf_token']) && $this->token->validateCSRFToken($this->post['csrf_token'])) {
             unset($this->post['csrf_token']);
-            return $this->post;
+            return $this->filterValues($this->post);
         }
 
         return array();
+    }
+
+    /**
+     * Get POST value without modification
+     *
+     * @param  $name
+     * @return mixed|null
+     */
+    public function getRawValue($name)
+    {
+        return isset($this->post[$name]) ? $this->post[$name] : null;
     }
 
     /**
@@ -343,5 +354,18 @@ class Request extends Base
     public function getServerVariable($variable)
     {
         return isset($this->server[$variable]) ? $this->server[$variable] : '';
+    }
+
+    protected function filterValues(array $values)
+    {
+        foreach ($values as $key => $value) {
+
+            // IE11 Workaround when submitting multipart/form-data
+            if (strpos($key, '-----------------------------') === 0) {
+                unset($values[$key]);
+            }
+        }
+
+        return $values;
     }
 }

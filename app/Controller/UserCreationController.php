@@ -22,10 +22,7 @@ class UserCreationController extends BaseController
      */
     public function show(array $values = array(), array $errors = array())
     {
-        $isRemote = $this->request->getIntegerParam('remote') == 1 || (isset($values['is_ldap_user']) && $values['is_ldap_user'] == 1);
-        $template = $isRemote ? 'user_creation/remote' : 'user_creation/local';
-
-        $this->response->html($this->template->render($template, array(
+        $this->response->html($this->template->render('user_creation/show', array(
             'timezones' => $this->timezoneModel->getTimezones(true),
             'languages' => $this->languageModel->getLanguages(true),
             'roles' => $this->role->getApplicationRoles(),
@@ -57,7 +54,7 @@ class UserCreationController extends BaseController
      *
      * @param array $values
      */
-    private function createUser(array $values)
+    protected function createUser(array $values)
     {
         $project_id = empty($values['project_id']) ? 0 : $values['project_id'];
         unset($values['project_id']);

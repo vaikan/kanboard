@@ -131,16 +131,34 @@ class FormHelper extends Base
      * Display a checkbox field
      *
      * @access public
-     * @param  string  $name      Field name
-     * @param  string  $label     Form label
-     * @param  string  $value     Form value
-     * @param  boolean $checked   Field selected or not
-     * @param  string  $class     CSS class
+     * @param  string  $name        Field name
+     * @param  string  $label       Form label
+     * @param  string  $value       Form value
+     * @param  boolean $checked     Field selected or not
+     * @param  string  $class       CSS class
+     * @param  array   $attributes
      * @return string
      */
-    public function checkbox($name, $label, $value, $checked = false, $class = '')
+    public function checkbox($name, $label, $value, $checked = false, $class = '', array $attributes = array())
     {
-        return '<label><input type="checkbox" name="'.$name.'" class="'.$class.'" value="'.$this->helper->text->e($value).'" '.($checked ? 'checked="checked"' : '').'>&nbsp;'.$this->helper->text->e($label).'</label>';
+        $htmlAttributes = '';
+
+        if ($checked) {
+            $attributes['checked'] = 'checked';
+        }
+
+        foreach ($attributes as $attribute => $attributeValue) {
+            $htmlAttributes .= sprintf('%s="%s"', $attribute, $this->helper->text->e($attributeValue));
+        }
+
+        return sprintf(
+            '<label><input type="checkbox" name="%s" class="%s" value="%s" %s>&nbsp;%s</label>',
+            $name,
+            $class,
+            $this->helper->text->e($value),
+            $htmlAttributes,
+            $this->helper->text->e($label)
+        );
     }
 
     /**
@@ -176,6 +194,47 @@ class FormHelper extends Base
         $html .= implode(' ', $attributes).'>';
         $html .= isset($values[$name]) ? $this->helper->text->e($values[$name]) : '';
         $html .= '</textarea>';
+        $html .= $this->errorList($errors, $name);
+
+        return $html;
+    }
+
+    /**
+     * Display a markdown editor
+     *
+     * @access public
+     * @param  string  $name     Field name
+     * @param  array   $values   Form values
+     * @param  array   $errors   Form errors
+     * @param  array   $attributes
+     * @return string
+     */
+    public function textEditor($name, $values = array(), array $errors = array(), array $attributes = array())
+    {
+        $params = array(
+            'name' => $name,
+            'css' => $this->errorClass($errors, $name),
+            'required' => isset($attributes['required']) && $attributes['required'],
+            'tabindex' => isset($attributes['tabindex']) ? $attributes['tabindex'] : '-1',
+            'labelPreview' => t('Preview'),
+            'labelWrite' => t('Write'),
+            'labelTitle' => t('Title'),
+            'placeholder' => t('Write your text in Markdown'),
+            'autofocus' => isset($attributes['autofocus']) && $attributes['autofocus'],
+            'suggestOptions' => array(
+                'triggers' => array(
+                    '#' => $this->helper->url->to('TaskAjaxController', 'suggest', array('search' => 'SEARCH_TERM')),
+                )
+            ),
+        );
+
+        if (isset($values['project_id'])) {
+            $params['suggestOptions']['triggers']['@'] = $this->helper->url->to('UserAjaxController', 'mention', array('project_id' => $values['project_id'], 'search' => 'SEARCH_TERM'));
+        }
+
+        $html = '<div class="js-text-editor" data-params=\''.json_encode($params, JSON_HEX_APOS).'\'>';
+        $html .= '<script type="text/template">'.(isset($values[$name]) ? htmlspecialchars($values[$name], ENT_QUOTES, 'UTF-8', true) : '').'</script>';
+        $html .= '</div>';
         $html .= $this->errorList($errors, $name);
 
         return $html;

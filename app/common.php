@@ -15,13 +15,13 @@ if ($dbUrlParser->isEnvironmentVariableDefined()) {
     define('DB_NAME', $dbSettings['database']);
 }
 
-$config_file = implode(DIRECTORY_SEPARATOR, array(__DIR__, '..', 'config.php'));
+$config_file = implode(DIRECTORY_SEPARATOR, array(__DIR__, '..', 'data', 'config.php'));
 
 if (file_exists($config_file)) {
     require $config_file;
 }
 
-$config_file = implode(DIRECTORY_SEPARATOR, array(__DIR__, '..', 'data', 'config.php'));
+$config_file = implode(DIRECTORY_SEPARATOR, array(__DIR__, '..', 'config.php'));
 
 if (file_exists($config_file)) {
     require $config_file;
@@ -42,13 +42,17 @@ $container->register(new Kanboard\ServiceProvider\NotificationProvider());
 $container->register(new Kanboard\ServiceProvider\ClassProvider());
 $container->register(new Kanboard\ServiceProvider\EventDispatcherProvider());
 $container->register(new Kanboard\ServiceProvider\GroupProvider());
+$container->register(new Kanboard\ServiceProvider\UserProvider());
 $container->register(new Kanboard\ServiceProvider\RouteProvider());
 $container->register(new Kanboard\ServiceProvider\ActionProvider());
 $container->register(new Kanboard\ServiceProvider\ExternalLinkProvider());
+$container->register(new Kanboard\ServiceProvider\ExternalTaskProvider());
 $container->register(new Kanboard\ServiceProvider\AvatarProvider());
 $container->register(new Kanboard\ServiceProvider\FilterProvider());
+$container->register(new Kanboard\ServiceProvider\FormatterProvider());
 $container->register(new Kanboard\ServiceProvider\JobProvider());
 $container->register(new Kanboard\ServiceProvider\QueueProvider());
 $container->register(new Kanboard\ServiceProvider\ApiProvider());
 $container->register(new Kanboard\ServiceProvider\CommandProvider());
+$container->register(new Kanboard\ServiceProvider\ObjectStorageProvider());
 $container->register(new Kanboard\ServiceProvider\PluginProvider());

@@ -79,24 +79,27 @@ class TaskTagModelTest extends Base
         $this->assertTrue($taskTagModel->save(1, 1, array('My tag 1', 'My tag 2', 'My tag 3')));
         $this->assertTrue($taskTagModel->save(1, 2, array('My tag 3')));
 
-        $tags = $taskTagModel->getTagsByTasks(array(1, 2, 3));
+        $tags = $taskTagModel->getTagsByTaskIds(array(1, 2, 3));
 
         $expected = array(
             1 => array(
                 array(
                     'id' => 1,
                     'name' => 'My tag 1',
-                    'task_id' => 1
+                    'task_id' => 1,
+                    'color_id' => null,
                 ),
                 array(
                     'id' => 2,
                     'name' => 'My tag 2',
-                    'task_id' => 1
+                    'task_id' => 1,
+                    'color_id' => null,
                 ),
                 array(
                     'id' => 3,
                     'name' => 'My tag 3',
-                    'task_id' => 1
+                    'task_id' => 1,
+                    'color_id' => null,
                 ),
             ),
             2 => array(
@@ -104,6 +107,7 @@ class TaskTagModelTest extends Base
                     'id' => 3,
                     'name' => 'My tag 3',
                     'task_id' => 2,
+                    'color_id' => null,
                 )
             )
         );
@@ -121,7 +125,7 @@ class TaskTagModelTest extends Base
         $this->assertEquals(1, $taskCreationModel->create(array('project_id' => 1, 'title' => 'test1')));
         $this->assertTrue($taskTagModel->save(1, 1, array('My tag 1', 'My tag 2', 'My tag 3')));
 
-        $tags = $taskTagModel->getTagsByTasks(array());
+        $tags = $taskTagModel->getTagsByTaskIds(array());
         $this->assertEquals(array(), $tags);
     }
 

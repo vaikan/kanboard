@@ -30,13 +30,14 @@ class AvatarFileController extends BaseController
      */
     public function upload()
     {
+        $this->checkCSRFParam();
         $user = $this->getUser();
 
         if (! $this->avatarFileModel->uploadImageFile($user['id'], $this->request->getFileInfo('avatar'))) {
-            $this->flash->failure(t('Unable to upload the file.'));
+            $this->flash->failure(t('Unable to upload files, check the permissions of your data folder.'));
         }
 
-        $this->response->redirect($this->helper->url->to('AvatarFileController', 'show', array('user_id' => $user['id'])));
+        $this->renderResponse($user['id']);
     }
 
     /**
@@ -48,7 +49,7 @@ class AvatarFileController extends BaseController
         $user = $this->getUser();
         $this->avatarFileModel->remove($user['id']);
         $this->userSession->refresh($user['id']);
-        $this->response->redirect($this->helper->url->to('AvatarFileController', 'show', array('user_id' => $user['id'])));
+        $this->renderResponse($user['id']);
     }
 
     /**
@@ -58,11 +59,17 @@ class AvatarFileController extends BaseController
     {
         $user_id = $this->request->getIntegerParam('user_id');
         $size = $this->request->getStringParam('size', 48);
+
+        if ($size > 100) {
+            $this->response->status(400);
+            return;
+        }
+
         $filename = $this->avatarFileModel->getFilename($user_id);
         $etag = md5($filename.$size);
 
         $this->response->withCache(365 * 86400, $etag);
-        $this->response->withContentType('image/jpeg');
+        $this->response->withContentType('image/png');
 
         if ($this->request->getHeader('If-None-Match') !== '"'.$etag.'"') {
             $this->response->send();
@@ -89,6 +96,15 @@ class AvatarFileController extends BaseController
                 ->toOutput();
         } catch (ObjectStorageException $e) {
             $this->logger->error($e->getMessage());
+        }
+    }
+
+    protected function renderResponse($userId)
+    {
+        if ($this->request->isAjax()) {
+            $this->show();
+        } else {
+            $this->response->redirect($this->helper->url->to('AvatarFileController', 'show', array('user_id' => $userId)));
         }
     }
 }

@@ -104,12 +104,12 @@ class PasswordResetController extends BaseController
      *
      * @param string $username
      */
-    private function sendEmail($username)
+    protected function sendEmail($username)
     {
         $token = $this->passwordResetModel->create($username);
 
         if ($token !== false) {
-            $user = $this->userModel->getByUsername($username);
+            $user = $this->userCacheDecorator->getByUsername($username);
 
             $this->emailClient->send(
                 $user['email'],
@@ -117,13 +117,17 @@ class PasswordResetController extends BaseController
                 t('Password Reset for Kanboard'),
                 $this->template->render('password_reset/email', array('token' => $token))
             );
+
+            $this->flash->success(t('A link to reset your password has been sent by email.'));
+        } else {
+            $this->flash->failure(t('Unfortunately, we are unable to reset your password. Did you enter a valid username? Do you have an email address in your profile?'));
         }
     }
 
     /**
      * Check feature availability
      */
-    private function checkActivation()
+    protected function checkActivation()
     {
         if ($this->configModel->get('password_reset', 0) == 0) {
             throw AccessForbiddenException::getInstance()->withoutLayout();

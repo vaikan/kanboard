@@ -27,6 +27,10 @@ class DatabaseProvider implements ServiceProviderInterface
     {
         $container['db'] = $this->getInstance();
 
+        if (DB_RUN_MIGRATIONS) {
+            self::runMigrations($container['db']);
+        }
+
         if (DEBUG) {
             $container['db']->getStatementHandler()
                 ->withLogging()
@@ -38,7 +42,7 @@ class DatabaseProvider implements ServiceProviderInterface
     }
 
     /**
-     * Setup the database driver and execute schema migration
+     * Setup the database driver
      *
      * @access public
      * @return \PicoDb\Database
@@ -59,12 +63,39 @@ class DatabaseProvider implements ServiceProviderInterface
                 throw new LogicException('Database driver not supported');
         }
 
-        if ($db->schema()->check(\Schema\VERSION)) {
-            return $db;
-        } else {
+        return $db;
+    }
+
+    /**
+     * Get current database version
+     *
+     * @static
+     * @access public
+     * @param  Database $db
+     * @return int
+     */
+    public static function getSchemaVersion(Database $db)
+    {
+        return $db->getDriver()->getSchemaVersion();
+    }
+
+    /**
+     * Execute database migrations
+     *
+     * @static
+     * @access public
+     * @throws RuntimeException
+     * @param  Database $db
+     * @return bool
+     */
+    public static function runMigrations(Database $db)
+    {
+        if (! $db->schema()->check(\Schema\VERSION)) {
             $messages = $db->getLogMessages();
             throw new RuntimeException('Unable to run SQL migrations: '.implode(', ', $messages).' (You may have to fix it manually)');
         }
+
+        return true;
     }
 
     /**
@@ -79,7 +110,7 @@ class DatabaseProvider implements ServiceProviderInterface
 
         return new Database(array(
             'driver' => 'sqlite',
-            'filename' => DB_FILENAME
+            'filename' => DB_FILENAME,
         ));
     }
 
@@ -99,11 +130,13 @@ class DatabaseProvider implements ServiceProviderInterface
             'username' => DB_USERNAME,
             'password' => DB_PASSWORD,
             'database' => DB_NAME,
-            'charset'  => 'utf8',
+            'charset'  => 'utf8mb4',
             'port'     => DB_PORT,
             'ssl_key'  => DB_SSL_KEY,
             'ssl_ca'   => DB_SSL_CA,
             'ssl_cert' => DB_SSL_CERT,
+            'verify_server_cert' => DB_VERIFY_SERVER_CERT,
+            'timeout'  => DB_TIMEOUT,
         ));
     }
 
@@ -124,6 +157,7 @@ class DatabaseProvider implements ServiceProviderInterface
             'password' => DB_PASSWORD,
             'database' => DB_NAME,
             'port'     => DB_PORT,
+            'timeout'  => DB_TIMEOUT,
         ));
     }
 }

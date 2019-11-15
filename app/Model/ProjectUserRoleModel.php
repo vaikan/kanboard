@@ -44,10 +44,7 @@ class ProjectUserRoleModel extends Base
     {
         $userProjects = $this->db
             ->hashtable(ProjectModel::TABLE)
-            ->beginOr()
             ->eq(self::TABLE.'.user_id', $user_id)
-            ->eq(ProjectModel::TABLE.'.is_everybody_allowed', 1)
-            ->closeOr()
             ->in(ProjectModel::TABLE.'.is_active', $status)
             ->join(self::TABLE, 'project_id', 'id')
             ->getAll(ProjectModel::TABLE.'.id', ProjectModel::TABLE.'.name');
@@ -70,15 +67,6 @@ class ProjectUserRoleModel extends Base
      */
     public function getUserRole($project_id, $user_id)
     {
-        $projectInfo = $this->db->table(ProjectModel::TABLE)
-            ->eq('id', $project_id)
-            ->columns('owner_id', 'is_everybody_allowed')
-            ->findOne();
-
-        if ($projectInfo['is_everybody_allowed'] == 1) {
-            return $projectInfo['owner_id'] == $user_id ? Role::PROJECT_MANAGER : Role::PROJECT_MEMBER;
-        }
-
         $role = $this->db->table(self::TABLE)->eq('user_id', $user_id)->eq('project_id', $project_id)->findOneColumn('role');
 
         if (empty($role)) {
@@ -98,7 +86,13 @@ class ProjectUserRoleModel extends Base
     public function getUsers($project_id)
     {
         return $this->db->table(self::TABLE)
-            ->columns(UserModel::TABLE.'.id', UserModel::TABLE.'.username', UserModel::TABLE.'.name', self::TABLE.'.role')
+            ->columns(
+                UserModel::TABLE.'.id',
+                UserModel::TABLE.'.username',
+                UserModel::TABLE.'.name',
+                UserModel::TABLE.'.email',
+                self::TABLE.'.role'
+            )
             ->join(UserModel::TABLE, 'id', 'user_id')
             ->eq('project_id', $project_id)
             ->asc(UserModel::TABLE.'.username')
@@ -157,16 +151,12 @@ class ProjectUserRoleModel extends Base
      */
     public function getAssignableUsers($project_id)
     {
-        if ($this->projectPermissionModel->isEverybodyAllowed($project_id)) {
-            return $this->userModel->getActiveUsersList();
-        }
-
         $userMembers = $this->db->table(self::TABLE)
             ->columns(UserModel::TABLE.'.id', UserModel::TABLE.'.username', UserModel::TABLE.'.name')
             ->join(UserModel::TABLE, 'id', 'user_id')
             ->eq(UserModel::TABLE.'.is_active', 1)
             ->eq(self::TABLE.'.project_id', $project_id)
-            ->in(self::TABLE.'.role', array(Role::PROJECT_MANAGER, Role::PROJECT_MEMBER))
+            ->neq(self::TABLE.'.role', Role::PROJECT_VIEWER)
             ->findAll();
 
         $groupMembers = $this->projectGroupRoleModel->getAssignableUsers($project_id);

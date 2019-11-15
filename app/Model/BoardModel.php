@@ -31,15 +31,16 @@ class BoardModel extends Base
      */
     public function getUserColumns()
     {
-        $column_names = explode(',', $this->configModel->get('board_columns', implode(',', $this->getDefaultColumns())));
+        $column_names = array_unique(explode_csv_field($this->configModel->get('board_columns', implode(',', $this->getDefaultColumns()))));
         $columns = array();
 
         foreach ($column_names as $column_name) {
-            $column_name = trim($column_name);
-
-            if (! empty($column_name)) {
-                $columns[] = array('title' => $column_name, 'task_limit' => 0, 'description' => '');
-            }
+            $columns[] = array(
+                'title' => $column_name,
+                'task_limit' => 0,
+                'description' => '',
+                'hide_in_dashboard' => 0,
+            );
         }
 
         return $columns;
@@ -64,6 +65,7 @@ class BoardModel extends Base
                 'project_id' => $project_id,
                 'task_limit' => $column['task_limit'],
                 'description' => $column['description'],
+                'hide_in_dashboard' => $column['hide_in_dashboard'] ?: 0, // Avoid SQL error with Postgres
             );
 
             if (! $this->db->table(ColumnModel::TABLE)->save($values)) {
@@ -85,31 +87,11 @@ class BoardModel extends Base
     public function duplicate($project_from, $project_to)
     {
         $columns = $this->db->table(ColumnModel::TABLE)
-                            ->columns('title', 'task_limit', 'description')
+                            ->columns('title', 'task_limit', 'description', 'hide_in_dashboard')
                             ->eq('project_id', $project_from)
                             ->asc('position')
                             ->findAll();
 
         return $this->boardModel->create($project_to, $columns);
-    }
-
-    /**
-     * Get the total of tasks per column
-     *
-     * @access public
-     * @param  integer   $project_id
-     * @param  boolean   $prepend       Prepend default value
-     * @return array
-     */
-    public function getColumnStats($project_id, $prepend = false)
-    {
-        $listing = $this->db
-                        ->hashtable(TaskModel::TABLE)
-                        ->eq('project_id', $project_id)
-                        ->eq('is_active', 1)
-                        ->groupBy('column_id')
-                        ->getAll('column_id', 'COUNT(*) AS total');
-
-        return $prepend ? array(-1 => t('All columns')) + $listing : $listing;
     }
 }

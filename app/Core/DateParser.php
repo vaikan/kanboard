@@ -13,7 +13,6 @@ use DateTime;
 class DateParser extends Base
 {
     const DATE_FORMAT = 'm/d/Y';
-    const DATE_TIME_FORMAT = 'm/d/Y H:i';
     const TIME_FORMAT = 'H:i';
 
     /**
@@ -35,7 +34,7 @@ class DateParser extends Base
      */
     public function getUserDateTimeFormat()
     {
-        return $this->configModel->get('application_datetime_format', DateParser::DATE_TIME_FORMAT);
+        return $this->getUserDateFormat().' '.$this->getUserTimeFormat();
     }
 
     /**
@@ -239,20 +238,8 @@ class DateParser extends Base
      */
     public function getHours(DateTime $d1, DateTime $d2)
     {
-        $seconds = $this->getRoundedSeconds(abs($d1->getTimestamp() - $d2->getTimestamp()));
+        $seconds = abs($d1->getTimestamp() - $d2->getTimestamp());
         return round($seconds / 3600, 2);
-    }
-
-    /**
-     * Round the timestamp to the nearest quarter
-     *
-     * @access public
-     * @param  integer    $seconds   Timestamp
-     * @return integer
-     */
-    public function getRoundedSeconds($seconds)
-    {
-        return (int) round($seconds / (15 * 60)) * (15 * 60);
     }
 
     /**
@@ -304,7 +291,9 @@ class DateParser extends Base
     {
         foreach ($fields as $field) {
             if (! empty($values[$field])) {
-                $values[$field] = date($format, $values[$field]);
+                if (ctype_digit($values[$field])) {
+                    $values[$field] = date($format, $values[$field]);
+                }
             } else {
                 $values[$field] = '';
             }

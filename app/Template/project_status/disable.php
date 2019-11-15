@@ -1,14 +1,15 @@
 <div class="page-header">
-    <h2><?= t('Project activation') ?></h2>
+    <h2><?= t('Close a project') ?></h2>
 </div>
 
 <div class="confirm">
     <p class="alert alert-info">
-        <?= t('Do you really want to disable this project: "%s"?', $project['name']) ?>
+        <?= t('Do you really want to close this project: "%s"?', $project['name']) ?>
     </p>
 
-    <div class="form-actions">
-        <?= $this->url->link(t('Yes'), 'ProjectStatusController', 'disable', array('project_id' => $project['id']), true, 'btn btn-red') ?>
-        <?= t('or') ?> <?= $this->url->link(t('cancel'), 'ProjectViewController', 'show', array('project_id' => $project['id']), false, 'close-popover') ?>
-    </div>
+    <?= $this->modal->confirmButtons(
+        'ProjectStatusController',
+        'disable',
+        array('project_id' => $project['id'])
+    ) ?>
 </div>

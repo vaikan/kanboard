@@ -2,7 +2,13 @@
 
 require_once __DIR__.'/../Base.php';
 
+use Kanboard\Api\Procedure\ProjectPermissionProcedure;
+use Kanboard\Core\Security\Role;
 use Kanboard\Core\Translator;
+use Kanboard\Model\ColumnModel;
+use Kanboard\Model\ProjectPermissionModel;
+use Kanboard\Model\SwimlaneModel;
+use Kanboard\Model\TagModel;
 use Kanboard\Subscriber\ProjectModificationDateSubscriber;
 use Kanboard\Model\ProjectModel;
 use Kanboard\Model\UserModel;
@@ -39,6 +45,39 @@ class ProjectModelTest extends Base
         $this->assertEquals(0, $project['is_private']);
         $this->assertEquals(time(), $project['last_modified'], '', 1);
         $this->assertEmpty($project['token']);
+        $this->assertEmpty($project['start_date']);
+        $this->assertEmpty($project['end_date']);
+    }
+
+    public function testCreationWithUserId()
+    {
+        $projectModel = new ProjectModel($this->container);
+
+        $this->assertFalse($projectModel->create(array('name' => 'UnitTest'), 3));
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest'), 1));
+        $project = $projectModel->getById(1);
+        $this->assertEquals(1, $project['owner_id']);
+
+        $this->assertEquals(2, $projectModel->create(array('name' => 'UnitTest'), 0));
+        $project = $projectModel->getById(2);
+        $this->assertEquals(0, $project['owner_id']);
+    }
+
+    public function testProjectDate()
+    {
+        $projectModel = new ProjectModel($this->container);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
+        $this->assertTrue($projectModel->update(array(
+            'id' => 1,
+            'start_date' => '2016-08-31',
+            'end_date' => '08/31/2016',
+        )));
+
+        $project = $projectModel->getById(1);
+        $this->assertEquals('2016-08-31', $project['start_date']);
+        $this->assertEquals('2016-08-31', $project['end_date']);
     }
 
     public function testCreationWithDuplicateName()
@@ -141,6 +180,26 @@ class ProjectModelTest extends Base
         $this->assertGreaterThan($now, $project['last_modified']);
     }
 
+    public function testUpdateOwnerId()
+    {
+        $projectModel = new ProjectModel($this->container);
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
+
+        $this->assertFalse($projectModel->update(array('id'=> 1, 'name' => 'test', 'owner_id' => 2)));
+
+        $this->assertTrue($projectModel->update(array('id'=> 1, 'name' => 'test', 'owner_id' => 1)));
+
+        $project = $projectModel->getById(1);
+        $this->assertNotEmpty($project);
+        $this->assertEquals(1, $project['owner_id']);
+
+        $this->assertTrue($projectModel->update(array('id'=> 1, 'name' => 'test', 'owner_id' => 0)));
+
+        $project = $projectModel->getById(1);
+        $this->assertNotEmpty($project);
+        $this->assertEquals(0, $project['owner_id']);
+    }
+
     public function testGetAllIds()
     {
         $projectModel = new ProjectModel($this->container);
@@ -187,6 +246,68 @@ class ProjectModelTest extends Base
         $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
         $this->assertTrue($projectModel->remove(1));
         $this->assertFalse($projectModel->remove(1234));
+    }
+
+    public function testRemoveTagsOnProjectRemove()
+    {
+        $projectModel = new ProjectModel($this->container);
+        $tagModel = new TagModel($this->container);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
+        $this->assertNotFalse($tagModel->create(1, 'TestTag'));
+
+        $this->assertCount(1, $tagModel->getAllByProject(1));
+
+        $this->assertTrue($projectModel->remove(1));
+
+        $this->assertCount(0, $tagModel->getAllByProject(1));
+    }
+
+    public function testRemoveSwimlaneOnProjectRemove()
+    {
+        $projectModel = new ProjectModel($this->container);
+        $swimlaneModel = new SwimlaneModel($this->container);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
+
+        $swimlaneId = $swimlaneModel->create(1, 'TestSwimlane');
+        $this->assertNotFalse($swimlaneId);
+
+        $this->assertTrue($projectModel->remove(1));
+        $this->assertNull($swimlaneModel->getById($swimlaneId));
+    }
+
+    public function testRemoveColumnOnProjectRemove()
+    {
+        $projectModel = new ProjectModel($this->container);
+        $columnModel = new ColumnModel($this->container);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
+
+        $columnId = $columnModel->create(1, 'TestColumn');
+        $this->assertNotFalse($columnId);
+
+        $this->assertTrue($projectModel->remove(1));
+        $this->assertNull($columnModel->getById($columnId));
+    }
+
+    public function testRemovePermissionOnProjectRemove()
+    {
+        $projectModel = new ProjectModel($this->container);
+        $userModel = new UserModel($this->container);
+
+        $permissionModel = new ProjectPermissionModel($this->container);
+        $permissionProcedure = new ProjectPermissionProcedure($this->container);
+
+        $userId = $userModel->create(array('username' => 'user1'));
+        $this->assertNotFalse($userId);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest')));
+        $permissionProcedure->addProjectUser(1, $userId, Role::PROJECT_MEMBER);
+
+        $this->assertTrue($permissionModel->isUserAllowed(1, $userId));
+        $this->assertTrue($projectModel->remove(1));
+        $this->assertFalse($permissionModel->isUserAllowed(1, $userId));
     }
 
     public function testEnable()
@@ -280,6 +401,39 @@ class ProjectModelTest extends Base
         $this->assertFalse($project);
     }
 
+    public function testEmail()
+    {
+        $projectModel = new ProjectModel($this->container);
+
+        // Creation
+        $this->assertEquals(1, $projectModel->create(array('name' => 'UnitTest1', 'email' => 'test1@localhost')));
+        $this->assertEquals(2, $projectModel->create(array('name' => 'UnitTest2')));
+
+        $project = $projectModel->getById(1);
+        $this->assertNotEmpty($project);
+        $this->assertEquals('test1@localhost', $project['email']);
+
+        $project = $projectModel->getById(2);
+        $this->assertNotEmpty($project);
+        $this->assertEquals('', $project['email']);
+
+        // Update
+        $this->assertTrue($projectModel->update(array('id' => '1', 'email' => 'test1@here')));
+
+        $project = $projectModel->getById(1);
+        $this->assertNotEmpty($project);
+        $this->assertEquals('test1@here', $project['email']);
+
+        $project = $projectModel->getByEmail('test1@here');
+        $this->assertEquals(1, $project['id']);
+
+        $project = $projectModel->getByEmail('test1@localhost');
+        $this->assertEmpty($project);
+
+        $project = $projectModel->getByEmail('');
+        $this->assertFalse($project);
+    }
+
     public function testThatProjectCreatorAreAlsoOwner()
     {
         $projectModel = new ProjectModel($this->container);
@@ -302,5 +456,18 @@ class ProjectModelTest extends Base
         $this->assertEquals('', $project['owner_name']);
         $this->assertEquals('', $project['owner_username']);
         $this->assertEquals(0, $project['owner_id']);
+    }
+
+    public function testGetList()
+    {
+        $projectModel = new ProjectModel($this->container);
+
+        $this->assertEquals(1, $projectModel->create(array('name' => 'Project B'), 1));
+        $this->assertEquals(2, $projectModel->create(array('name' => 'Project A', 'is_private' => 1), 1));
+
+        $this->assertEquals(array(0 => 'None', 1 => 'Project B'), $projectModel->getList());
+        $this->assertEquals(array(1 => 'Project B'), $projectModel->getList(false));
+        $this->assertEquals(array(2 => 'Project A', 1 => 'Project B'), $projectModel->getList(false, false));
+        $this->assertEquals(array(0 => 'None', 2 => 'Project A', 1 => 'Project B'), $projectModel->getList(true, false));
     }
 }

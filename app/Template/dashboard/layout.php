@@ -3,24 +3,21 @@
         <ul>
             <?php if ($this->user->hasAccess('ProjectCreationController', 'create')): ?>
                 <li>
-                    <i class="fa fa-plus fa-fw"></i>
-                    <?= $this->url->link(t('New project'), 'ProjectCreationController', 'create', array(), false, 'popover') ?>
+                    <?= $this->modal->medium('plus', t('New project'), 'ProjectCreationController', 'create') ?>
                 </li>
             <?php endif ?>
             <?php if ($this->app->config('disable_private_project', 0) == 0): ?>
-            <li>
-                <i class="fa fa-lock fa-fw"></i>
-                <?= $this->url->link(t('New private project'), 'ProjectCreationController', 'createPrivate', array(), false, 'popover') ?>
-            </li>
+                <li>
+                    <?= $this->modal->medium('lock', t('New private project'), 'ProjectCreationController', 'createPrivate') ?>
+                </li>
             <?php endif ?>
             <li>
-                <i class="fa fa-search fa-fw"></i>
-                <?= $this->url->link(t('Search'), 'SearchController', 'index') ?>
+                <?= $this->url->icon('folder', t('Project management'), 'ProjectListController', 'show') ?>
             </li>
             <li>
-                <i class="fa fa-folder fa-fw"></i>
-                <?= $this->url->link(t('Project management'), 'ProjectListController', 'show') ?>
+                <?= $this->modal->medium('dashboard', t('My activity stream'), 'ActivityController', 'user') ?>
             </li>
+            <?= $this->hook->render('template:dashboard:page-header:menu', array('user' => $user)) ?>
         </ul>
     </div>
     <section class="sidebar-container" id="dashboard">

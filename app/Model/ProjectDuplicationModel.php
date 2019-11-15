@@ -24,10 +24,11 @@ class ProjectDuplicationModel extends Base
     {
         return array(
             'categoryModel',
+            'projectRoleModel',
             'projectPermissionModel',
             'actionModel',
-            'swimlaneModel',
             'tagDuplicationModel',
+            'customFilterModel',
             'projectMetadataModel',
             'projectTaskDuplicationModel',
         );
@@ -42,12 +43,15 @@ class ProjectDuplicationModel extends Base
     public function getPossibleSelection()
     {
         return array(
+            'swimlaneModel',
             'boardModel',
             'categoryModel',
+            'projectRoleModel',
             'projectPermissionModel',
             'actionModel',
             'swimlaneModel',
             'tagDuplicationModel',
+            'customFilterModel',
             'projectMetadataModel',
             'projectTaskDuplicationModel',
         );
@@ -80,21 +84,22 @@ class ProjectDuplicationModel extends Base
      * @param  integer    $owner_id             Owner of the project
      * @param  string     $name                 Name of the project
      * @param  boolean    $private              Force the project to be private
+     * @param  string     $identifier           Identifier of the project
      * @return integer                          Cloned Project Id
      */
-    public function duplicate($src_project_id, $selection = array('projectPermissionModel', 'categoryModel', 'actionModel'), $owner_id = 0, $name = null, $private = null)
+    public function duplicate($src_project_id, $selection = array('projectPermissionModel', 'categoryModel', 'actionModel'), $owner_id = 0, $name = null, $private = null, $identifier = null)
     {
         $this->db->startTransaction();
 
         // Get the cloned project Id
-        $dst_project_id = $this->copy($src_project_id, $owner_id, $name, $private);
+        $dst_project_id = $this->copy($src_project_id, $owner_id, $name, $private, $identifier);
 
         if ($dst_project_id === false) {
             $this->db->cancelTransaction();
             return false;
         }
 
-        // Clone Columns, Categories, Permissions and Actions
+        // Clone Swimlanes, Columns, Categories, Permissions and Actions
         foreach ($this->getPossibleSelection() as $model) {
 
             // Skip if optional part has not been selected
@@ -131,12 +136,17 @@ class ProjectDuplicationModel extends Base
      * @param  integer    $owner_id
      * @param  string     $name
      * @param  boolean    $private
+     * @param  string     $identifier
      * @return integer
      */
-    private function copy($src_project_id, $owner_id = 0, $name = null, $private = null)
+    private function copy($src_project_id, $owner_id = 0, $name = null, $private = null, $identifier = null)
     {
         $project = $this->projectModel->getById($src_project_id);
         $is_private = empty($project['is_private']) ? 0 : 1;
+
+        if (! empty($identifier)) {
+            $identifier = strtoupper($identifier);
+        }
 
         $values = array(
             'name' => $name ?: $this->getClonedProjectName($project['name']),
@@ -149,13 +159,10 @@ class ProjectDuplicationModel extends Base
             'priority_default' => $project['priority_default'],
             'priority_start' => $project['priority_start'],
             'priority_end' => $project['priority_end'],
+            'identifier' => $identifier,
         );
 
-        if (! $this->db->table(ProjectModel::TABLE)->save($values)) {
-            return false;
-        }
-
-        return $this->db->getLastId();
+        return $this->db->table(ProjectModel::TABLE)->persist($values);
     }
 
     /**

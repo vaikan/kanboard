@@ -23,11 +23,24 @@ class TaskListController extends BaseController
         $project = $this->getProject();
         $search = $this->helper->projectHeader->getSearchQuery($project);
 
+        if ($this->request->getIntegerParam('show_subtasks')) {
+            session_set('subtaskListToggle', true);
+        } elseif ($this->request->getIntegerParam('hide_subtasks')) {
+            session_set('subtaskListToggle', false);
+        }
+
+        if ($this->userSession->hasSubtaskListActivated()) {
+            $formatter = $this->taskListSubtaskFormatter;
+        } else {
+            $formatter = $this->taskListFormatter;
+        }
+
         $paginator = $this->paginator
             ->setUrl('TaskListController', 'show', array('project_id' => $project['id']))
             ->setMax(30)
             ->setOrder(TaskModel::TABLE.'.id')
             ->setDirection('DESC')
+            ->setFormatter($formatter)
             ->setQuery($this->taskLexer
                 ->build($search)
                 ->withFilter(new TaskProjectFilter($project['id']))
@@ -35,11 +48,11 @@ class TaskListController extends BaseController
             )
             ->calculate();
 
-        $this->response->html($this->helper->layout->app('task_list/show', array(
-            'project' => $project,
-            'title' => $project['name'],
+        $this->response->html($this->helper->layout->app('task_list/listing', array(
+            'project'     => $project,
+            'title'       => $project['name'],
             'description' => $this->helper->projectHeader->getDescription($project),
-            'paginator' => $paginator,
+            'paginator'   => $paginator,
         )));
     }
 }

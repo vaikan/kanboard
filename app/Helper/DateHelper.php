@@ -54,7 +54,7 @@ class DateHelper extends Base
      */
     public function datetime($value)
     {
-        return date($this->configModel->get('application_datetime_format', 'm/d/Y H:i'), $value);
+        return date($this->dateParser->getUserDateTimeFormat(), $value);
     }
 
     /**
@@ -72,7 +72,9 @@ class DateHelper extends Base
 
         $dtF = new DateTime("@0");
         $dtT = new DateTime("@$seconds");
-        return $dtF->diff($dtT)->format('%a days, %h hours, %i minutes and %s seconds');
+
+        $format = sprintf("%%d %s, %%h %s, %%i %s, %%s %s", t('days'), t('hours'), t('minutes'), t('seconds'));
+        return $dtF->diff($dtT)->format($format);
     }
 
     /**

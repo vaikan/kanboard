@@ -2,15 +2,15 @@
 
 namespace Kanboard\Controller;
 
+use Exception;
 use Kanboard\Core\Controller\AccessForbiddenException;
-use Kanboard\Formatter\BoardFormatter;
 use Kanboard\Model\UserMetadataModel;
 
 /**
  * Class BoardAjaxController
  *
  * @package Kanboard\Controller
- * @author  Fredric Guillot
+ * @author  Frederic Guillot
  */
 class BoardAjaxController extends BaseController
 {
@@ -29,18 +29,26 @@ class BoardAjaxController extends BaseController
 
         $values = $this->request->getJson();
 
-        $result =$this->taskPositionModel->movePosition(
-            $project_id,
-            $values['task_id'],
-            $values['column_id'],
-            $values['position'],
-            $values['swimlane_id']
-        );
+        if (! $this->helper->projectRole->canMoveTask($project_id, $values['src_column_id'], $values['dst_column_id'])) {
+            throw new AccessForbiddenException(e("You don't have the permission to move this task"));
+        }
 
-        if (! $result) {
-            $this->response->status(400);
-        } else {
-            $this->response->html($this->renderBoard($project_id), 201);
+        try {
+            $result =$this->taskPositionModel->movePosition(
+                $project_id,
+                $values['task_id'],
+                $values['dst_column_id'],
+                $values['position'],
+                $values['swimlane_id']
+            );
+
+            if (! $result) {
+                $this->response->status(400);
+            } else {
+                $this->response->html($this->renderBoard($project_id), 201);
+            }
+        } catch (Exception $e) {
+            $this->response->html('<div class="alert alert-error">'.$e->getMessage().'</div>');
         }
     }
 
@@ -135,7 +143,7 @@ class BoardAjaxController extends BaseController
             'board_highlight_period' => $this->configModel->get('board_highlight_period'),
             'swimlanes' => $this->taskLexer
                 ->build($this->userSession->getFilters($project_id))
-                ->format(BoardFormatter::getInstance($this->container)->withProjectId($project_id))
+                ->format($this->boardFormatter->withProjectId($project_id))
         ));
     }
 }

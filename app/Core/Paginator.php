@@ -2,13 +2,14 @@
 
 namespace Kanboard\Core;
 
+use Kanboard\Core\Filter\FormatterInterface;
 use Pimple\Container;
 use PicoDb\Table;
 
 /**
- * Paginator helper
+ * Paginator Helper
  *
- * @package  core
+ * @package  Kanboard\Core
  * @author   Frederic Guillot
  */
 class Paginator
@@ -102,12 +103,25 @@ class Paginator
     private $action = '';
 
     /**
+     * URL anchor
+     *
+     * @access private
+     * @var string
+     */
+    private $anchor = '';
+
+    /**
      * Url params
      *
      * @access private
      * @var array
      */
     private $params = array();
+
+    /**
+     * @var FormatterInterface
+     */
+    protected $formatter = null;
 
     /**
      * Constructor
@@ -125,12 +139,24 @@ class Paginator
      *
      * @access public
      * @param  \PicoDb\Table
-     * @return Paginator
+     * @return $this
      */
     public function setQuery(Table $query)
     {
         $this->query = $query;
         $this->total = $this->query->count();
+        return $this;
+    }
+
+    /**
+     * Set Formatter
+     *
+     * @param  FormatterInterface $formatter
+     * @return $this
+     */
+    public function setFormatter(FormatterInterface $formatter)
+    {
+        $this->formatter = $formatter;
         return $this;
     }
 
@@ -143,11 +169,22 @@ class Paginator
     public function executeQuery()
     {
         if ($this->query !== null) {
-            return $this->query
-                        ->offset($this->offset)
-                        ->limit($this->limit)
-                        ->orderBy($this->order, $this->direction)
-                        ->findAll();
+
+            $this->query
+                ->offset($this->offset)
+                ->limit($this->limit);
+
+            if (preg_match('/^[a-zA-Z0-9._]+$/', $this->order)) {
+                $this->query->orderBy($this->order, $this->direction);
+            } else {
+                $this->order = '';
+            }
+
+            if ($this->formatter !== null) {
+                return $this->formatter->withQuery($this->query)->format();
+            } else {
+                return $this->query->findAll();
+            }
         }
 
         return array();
@@ -160,13 +197,15 @@ class Paginator
      * @param  string      $controller
      * @param  string      $action
      * @param  array       $params
-     * @return Paginator
+     * @param  string      $anchor
+     * @return $this
      */
-    public function setUrl($controller, $action, array $params = array())
+    public function setUrl($controller, $action, array $params = array(), $anchor = '')
     {
         $this->controller = $controller;
         $this->action = $action;
         $this->params = $params;
+        $this->anchor = $anchor;
         return $this;
     }
 
@@ -175,7 +214,7 @@ class Paginator
      *
      * @access public
      * @param  array       $items
-     * @return Paginator
+     * @return $this
      */
     public function setCollection(array $items)
     {
@@ -199,7 +238,7 @@ class Paginator
      *
      * @access public
      * @param  integer    $total
-     * @return Paginator
+     * @return $this
      */
     public function setTotal($total)
     {
@@ -223,7 +262,7 @@ class Paginator
      *
      * @access public
      * @param  integer     $page
-     * @return Paginator
+     * @return $this
      */
     public function setPage($page)
     {
@@ -232,11 +271,22 @@ class Paginator
     }
 
     /**
+     * Get the number of current page
+     *
+     * @access public
+     * @return integer
+     */
+    public function getPage()
+    {
+        return $this->page;
+    }
+
+    /**
      * Set the default column order
      *
      * @access public
      * @param  string     $order
-     * @return Paginator
+     * @return $this
      */
     public function setOrder($order)
     {
@@ -249,7 +299,7 @@ class Paginator
      *
      * @access public
      * @param  string    $direction
-     * @return Paginator
+     * @return $this
      */
     public function setDirection($direction)
     {
@@ -262,12 +312,22 @@ class Paginator
      *
      * @access public
      * @param  integer     $limit
-     * @return Paginator
+     * @return $this
      */
     public function setMax($limit)
     {
         $this->limit = $limit;
         return $this;
+    }
+
+    /**
+     * Get the maximum number of items per page.
+     *
+     * @return int
+     */
+    public function getMax()
+    {
+        return $this->limit;
     }
 
     /**
@@ -286,7 +346,7 @@ class Paginator
      *
      * @access public
      * @param  boolean    $condition
-     * @return Paginator
+     * @return $this
      */
     public function calculateOnlyIf($condition)
     {
@@ -298,10 +358,10 @@ class Paginator
     }
 
     /**
-     * Calculate the offset value accoring to url params and the page number
+     * Calculate the offset value according to url params and the page number
      *
      * @access public
-     * @return Paginator
+     * @return $this
      */
     public function calculate()
     {
@@ -353,7 +413,12 @@ class Paginator
                 '&larr; '.t('Previous'),
                 $this->controller,
                 $this->action,
-                $this->getUrlParams($this->page - 1, $this->order, $this->direction)
+                $this->getUrlParams($this->page - 1, $this->order, $this->direction),
+                false,
+                'js-modal-replace',
+                t('Previous'),
+                false,
+                $this->anchor
             );
         } else {
             $html .= '&larr; '.t('Previous');
@@ -379,7 +444,12 @@ class Paginator
                 t('Next').' &rarr;',
                 $this->controller,
                 $this->action,
-                $this->getUrlParams($this->page + 1, $this->order, $this->direction)
+                $this->getUrlParams($this->page + 1, $this->order, $this->direction),
+                false,
+                'js-modal-replace',
+                t('Next'),
+                false,
+                $this->anchor
             );
         } else {
             $html .= t('Next').' &rarr;';
@@ -391,12 +461,23 @@ class Paginator
     }
 
     /**
+     * Generate the page showing.
+     *
+     * @access public
+     * @return string
+     */
+    public function generatePageShowing()
+    {
+        return '<span class="pagination-showing">'.t('Showing %d-%d of %d', (($this->getPage() - 1) * $this->getMax() + 1), min($this->getTotal(), $this->getPage() * $this->getMax()), $this->getTotal()).'</span>';
+    }
+
+    /**
      * Return true if there is no pagination to show
      *
      * @access public
      * @return boolean
      */
-    public function hasNothingtoShow()
+    public function hasNothingToShow()
     {
         return $this->offset === 0 && ($this->total - $this->offset) <= $this->limit;
     }
@@ -411,8 +492,9 @@ class Paginator
     {
         $html = '';
 
-        if (! $this->hasNothingtoShow()) {
+        if (! $this->hasNothingToShow()) {
             $html .= '<div class="pagination">';
+            $html .= $this->generatePageShowing();
             $html .= $this->generatePreviousLink();
             $html .= $this->generateNextLink();
             $html .= '</div>';
@@ -453,7 +535,9 @@ class Paginator
             $label,
             $this->controller,
             $this->action,
-            $this->getUrlParams($this->page, $column, $direction)
+            $this->getUrlParams($this->page, $column, $direction),
+            false,
+            'js-modal-replace'
         );
     }
 }

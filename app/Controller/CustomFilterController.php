@@ -18,20 +18,34 @@ class CustomFilterController extends BaseController
      * Display list of filters
      *
      * @access public
-     * @param  array $values
-     * @param  array $errors
      * @throws \Kanboard\Core\Controller\PageNotFoundException
      */
-    public function index(array $values = array(), array $errors = array())
+    public function index()
     {
         $project = $this->getProject();
 
         $this->response->html($this->helper->layout->project('custom_filter/index', array(
-            'values' => $values + array('project_id' => $project['id']),
-            'errors' => $errors,
             'project' => $project,
             'custom_filters' => $this->customFilterModel->getAll($project['id'], $this->userSession->getId()),
             'title' => t('Custom filters'),
+        )));
+    }
+
+    /**
+     * Show creation form for custom filters
+     *
+     * @access public
+     * @param array $values
+     * @param array $errors
+     */
+    public function create(array $values = array(), array $errors = array())
+    {
+        $project = $this->getProject();
+
+        $this->response->html($this->template->render('custom_filter/create', array(
+            'values' => $values + array('project_id' => $project['id']),
+            'errors' => $errors,
+            'project' => $project,
         )));
     }
 
@@ -45,6 +59,7 @@ class CustomFilterController extends BaseController
         $project = $this->getProject();
 
         $values = $this->request->getValues();
+        $values['project_id'] = $project['id'];
         $values['user_id'] = $this->userSession->getId();
 
         list($valid, $errors) = $this->customFilterValidator->validateCreation($values);
@@ -52,13 +67,14 @@ class CustomFilterController extends BaseController
         if ($valid) {
             if ($this->customFilterModel->create($values) !== false) {
                 $this->flash->success(t('Your custom filter have been created successfully.'));
-                return $this->response->redirect($this->helper->url->to('CustomFilterController', 'index', array('project_id' => $project['id'])));
+                $this->response->redirect($this->helper->url->to('CustomFilterController', 'index', array('project_id' => $project['id'])), true);
+                return;
             } else {
                 $this->flash->failure(t('Unable to create your custom filter.'));
             }
         }
 
-        return $this->index($values, $errors);
+        $this->create($values, $errors);
     }
 
     /**
@@ -69,7 +85,7 @@ class CustomFilterController extends BaseController
     public function confirm()
     {
         $project = $this->getProject();
-        $filter = $this->customFilterModel->getById($this->request->getIntegerParam('filter_id'));
+        $filter = $this->getCustomFilter($project);
 
         $this->response->html($this->helper->layout->project('custom_filter/remove', array(
             'project' => $project,
@@ -87,7 +103,7 @@ class CustomFilterController extends BaseController
     {
         $this->checkCSRFParam();
         $project = $this->getProject();
-        $filter = $this->customFilterModel->getById($this->request->getIntegerParam('filter_id'));
+        $filter = $this->getCustomFilter($project);
 
         $this->checkPermission($project, $filter);
 
@@ -138,6 +154,8 @@ class CustomFilterController extends BaseController
         $this->checkPermission($project, $filter);
 
         $values = $this->request->getValues();
+        $values['id'] = $filter['id'];
+        $values['project_id'] = $project['id'];
 
         if (! isset($values['is_shared'])) {
             $values += array('is_shared' => 0);
@@ -152,21 +170,24 @@ class CustomFilterController extends BaseController
         if ($valid) {
             if ($this->customFilterModel->update($values)) {
                 $this->flash->success(t('Your custom filter have been updated successfully.'));
-                return $this->response->redirect($this->helper->url->to('CustomFilterController', 'index', array('project_id' => $project['id'])));
+                $this->response->redirect($this->helper->url->to('CustomFilterController', 'index', array('project_id' => $project['id'])), true);
+                return;
             } else {
                 $this->flash->failure(t('Unable to update custom filter.'));
             }
         }
 
-        return $this->edit($values, $errors);
+        $this->edit($values, $errors);
     }
 
     private function checkPermission(array $project, array $filter)
     {
-        $user_id = $this->userSession->getId();
+        $userID = $this->userSession->getId();
 
-        if ($filter['user_id'] != $user_id && ($this->projectUserRoleModel->getUserRole($project['id'], $user_id) === Role::PROJECT_MANAGER || ! $this->userSession->isAdmin())) {
-            throw new AccessForbiddenException();
+        if ($filter['user_id'] != $userID) {
+            if ($this->projectUserRoleModel->getUserRole($project['id'], $userID) !== Role::PROJECT_MANAGER && ! $this->userSession->isAdmin()) {
+                throw new AccessForbiddenException();
+            }
         }
     }
 }

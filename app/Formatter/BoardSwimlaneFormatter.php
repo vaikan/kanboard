@@ -24,7 +24,7 @@ class BoardSwimlaneFormatter extends BaseFormatter implements FormatterInterface
      * @param  array $swimlanes
      * @return $this
      */
-    public function withSwimlanes($swimlanes)
+    public function withSwimlanes(array $swimlanes)
     {
         $this->swimlanes = $swimlanes;
         return $this;
@@ -37,7 +37,7 @@ class BoardSwimlaneFormatter extends BaseFormatter implements FormatterInterface
      * @param  array $columns
      * @return $this
      */
-    public function withColumns($columns)
+    public function withColumns(array $columns)
     {
         $this->columns = $columns;
         return $this;
@@ -82,7 +82,7 @@ class BoardSwimlaneFormatter extends BaseFormatter implements FormatterInterface
 
         foreach ($this->swimlanes as &$swimlane) {
             $swimlane['id'] = (int) $swimlane['id'];
-            $swimlane['columns'] = BoardColumnFormatter::getInstance($this->container)
+            $swimlane['columns'] = $this->boardColumnFormatter
                 ->withSwimlaneId($swimlane['id'])
                 ->withColumns($this->columns)
                 ->withTasks($this->tasks)
@@ -97,11 +97,20 @@ class BoardSwimlaneFormatter extends BaseFormatter implements FormatterInterface
             $this->calculateStatsByColumnAcrossSwimlanes($swimlane['columns']);
         }
 
+        foreach ($this->swimlanes as &$swimlane) {
+            foreach ($swimlane['columns'] as $columnIndex => &$column) {
+                $column['column_nb_tasks'] = $this->swimlanes[0]['columns'][$columnIndex]['column_nb_tasks'];
+                $column['column_nb_score'] = $this->swimlanes[0]['columns'][$columnIndex]['column_score'];
+                // add number of open tasks to each column, ignoring the current filter
+                $column['column_nb_open_tasks'] = $this->columns[array_search($column['id'], array_column($this->columns, 'id'))]['nb_open_tasks'];
+            }
+        }
+
         return $this->swimlanes;
     }
 
     /**
-     * Calculate stats for each column acrosss all swimlanes
+     * Calculate stats for each column across all swimlanes
      *
      * @access protected
      * @param  array $columns

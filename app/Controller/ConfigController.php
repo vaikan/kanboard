@@ -46,12 +46,6 @@ class ConfigController extends BaseController
                     'disable_private_project' => 0,
                 );
                 break;
-            case 'integrations':
-                $values += array('integration_gravatar' => 0);
-                break;
-            case 'calendar':
-                $values += array('calendar_user_subtasks_time_tracking' => 0);
-                break;
         }
 
         if ($this->configModel->save($values)) {
@@ -76,7 +70,6 @@ class ConfigController extends BaseController
             'languages' => $this->languageModel->getLanguages(),
             'timezones' => $this->timezoneModel->getTimezones(),
             'date_formats' => $this->dateParser->getAvailableFormats($this->dateParser->getDateFormats()),
-            'datetime_formats' => $this->dateParser->getAvailableFormats($this->dateParser->getDateTimeFormats()),
             'time_formats' => $this->dateParser->getAvailableFormats($this->dateParser->getTimeFormats()),
             'title' => t('Settings').' &gt; '.t('Application settings'),
         )));
@@ -125,18 +118,6 @@ class ConfigController extends BaseController
     {
         $this->response->html($this->helper->layout->config('config/board', array(
             'title' => t('Settings').' &gt; '.t('Board settings'),
-        )));
-    }
-
-    /**
-     * Display the calendar settings page
-     *
-     * @access public
-     */
-    public function calendar()
-    {
-        $this->response->html($this->helper->layout->config('config/calendar', array(
-            'title' => t('Settings').' &gt; '.t('Calendar settings'),
         )));
     }
 
@@ -198,6 +179,35 @@ class ConfigController extends BaseController
         $this->checkCSRFParam();
         $this->configModel->optimizeDatabase();
         $this->flash->success(t('Database optimization done.'));
+        $this->response->redirect($this->helper->url->to('ConfigController', 'index'));
+    }
+
+    /**
+     * Display the Sqlite database upload page
+     *
+     * @access public
+     */
+    public function uploadDb()
+    {
+        $this->response->html($this->template->render('config/upload_db'));
+    }
+
+    /**
+     * Replace current Sqlite db with uploaded file
+     *
+     * @access public
+     */
+    public function saveUploadedDb()
+    {
+        $this->checkCSRFParam();
+        $filename = $this->request->getFilePath('file');
+
+        if (!file_exists($filename) || !$this->configModel->uploadDatabase($filename)) {
+            $this->flash->failure(t('Unable to read uploaded file.'));
+        } else {
+            $this->flash->success(t('Database uploaded successfully.'));
+        }
+
         $this->response->redirect($this->helper->url->to('ConfigController', 'index'));
     }
 

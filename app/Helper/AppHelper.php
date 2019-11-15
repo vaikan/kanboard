@@ -12,17 +12,54 @@ use Kanboard\Core\Base;
  */
 class AppHelper extends Base
 {
+    public function tooltipMarkdown($markdownText, $icon = 'fa-info-circle')
+    {
+        return '<span class="tooltip"><i class="fa '.$icon.'"></i><script type="text/template"><div class="markdown">'.$this->helper->text->markdown($markdownText).'</div></script></span>';
+    }
+
+    public function tooltipHTML($htmlText, $icon = 'fa-info-circle')
+    {
+        return '<span class="tooltip"><i class="fa '.$icon.'"></i><script type="text/template"><div class="markdown">'.$htmlText.'</div></script></span>';
+    }
+
+    public function tooltipLink($label, $link)
+    {
+        return '<span class="tooltip" data-href="'.$link.'">'.$label.'</span>';
+    }
+
+    public function getToken()
+    {
+        return $this->token;
+    }
+
+    public function isAjax()
+    {
+        return $this->request->isAjax();
+    }
+
+    /**
+     * Render Javascript component
+     *
+     * @param  string $name
+     * @param  array  $params
+     * @return string
+     */
+    public function component($name, array $params = array())
+    {
+        return '<div class="js-'.$name.'" data-params=\''.json_encode($params, JSON_HEX_APOS).'\'></div>';
+    }
+
     /**
      * Get config variable
      *
      * @access public
      * @param  string $param
-     * @param  mixed  $default_value
+     * @param  mixed  $default
      * @return mixed
      */
-    public function config($param, $default_value = '')
+    public function config($param, $default = '')
     {
-        return $this->configModel->get($param, $default_value);
+        return $this->configModel->get($param, $default);
     }
 
     /**

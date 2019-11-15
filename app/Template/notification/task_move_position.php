@@ -1,3 +1,5 @@
+<html>
+<body>
 <h2><?= $this->text->e($task['title']) ?> (#<?= $task['id'] ?>)</h2>
 
 <ul>
@@ -8,4 +10,6 @@
     <li><?= t('Task position:').' '.$this->text->e($task['position']) ?></li>
 </ul>
 
-<?= $this->render('notification/footer', array('task' => $task, 'application_url' => $application_url)) ?>
+<?= $this->render('notification/footer', array('task' => $task)) ?>
+</body>
+</html>

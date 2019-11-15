@@ -86,18 +86,23 @@ class Markdown extends Parsedown
      */
     protected function inlineUserLink(array $Excerpt)
     {
-        if (! $this->isPublicLink && preg_match('/^@([^\s]+)/', $Excerpt['text'], $matches)) {
-            $user_id = $this->container['userModel']->getIdByUsername($matches[1]);
+        if (! $this->isPublicLink && preg_match('/^@([^\s,!:?]+)/', $Excerpt['text'], $matches)) {
+            $username = rtrim($matches[1], '.');
+            $user = $this->container['userCacheDecorator']->getByUsername($username);
 
-            if (! empty($user_id)) {
-                $url = $this->container['helper']->url->href('UserViewController', 'profile', array('user_id' => $user_id));
+            if (! empty($user)) {
+                $url = $this->container['helper']->url->to('UserViewController', 'profile', array('user_id' => $user['id']));
 
                 return array(
-                    'extent' => strlen($matches[0]),
+                    'extent'  => strlen($username) + 1,
                     'element' => array(
-                        'name' => 'a',
-                        'text' => $matches[0],
-                        'attributes' => array('href' => $url, 'class' => 'user-mention-link'),
+                        'name'       => 'a',
+                        'text'       => '@' . $username,
+                        'attributes' => array(
+                            'href'  => $url,
+                            'class' => 'user-mention-link',
+                            'title' => $user['name'] ?: $user['username'],
+                        ),
                     ),
                 );
             }
@@ -119,23 +124,40 @@ class Markdown extends Parsedown
             $token = $this->container['memoryCache']->proxy($this->container['taskFinderModel'], 'getProjectToken', $task_id);
 
             if (! empty($token)) {
-                return $this->container['helper']->url->href(
+                return $this->container['helper']->url->to(
                     'TaskViewController',
                     'readonly',
                     array(
                         'token' => $token,
                         'task_id' => $task_id,
-                    )
+                    ),
+                    '',
+                    true
                 );
             }
 
             return '';
         }
 
-        return $this->container['helper']->url->href(
+        return $this->container['helper']->url->to(
             'TaskViewController',
             'show',
             array('task_id' => $task_id)
         );
+    }
+
+    /**
+     * Exclude from nesting task links and user mentions for links
+     *
+     * @param array $Excerpt
+     * @return array|null
+     */
+    protected function inlineLink($Excerpt)
+    {
+        $Inline = parent::inlineLink($Excerpt);
+        if (is_array($Inline)) {
+            array_push($Inline['element']['nonNestables'], 'TaskLink', 'UserLink');
+        }
+        return $Inline;
     }
 }

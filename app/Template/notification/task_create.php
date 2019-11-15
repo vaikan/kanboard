@@ -1,3 +1,5 @@
+<html>
+<body>
 <h2><?= $this->text->e($task['title']) ?> (#<?= $task['id'] ?>)</h2>
 
 <ul>
@@ -6,7 +8,7 @@
     </li>
     <?php if ($task['date_due']): ?>
     <li>
-        <strong><?= t('Due date:').' '.$this->dt->date($task['date_due']) ?></strong>
+        <strong><?= t('Due date:').' '.$this->dt->datetime($task['date_due']) ?></strong>
     </li>
     <?php endif ?>
     <?php if (! empty($task['creator_username'])): ?>
@@ -37,7 +39,9 @@
 
 <?php if (! empty($task['description'])): ?>
     <h2><?= t('Description') ?></h2>
-    <?= $this->text->markdown($task['description']) ?>
+    <?= $this->text->markdown($task['description'], true) ?>
 <?php endif ?>
 
-<?= $this->render('notification/footer', array('task' => $task, 'application_url' => $application_url)) ?>
+<?= $this->render('notification/footer', array('task' => $task)) ?>
+</body>
+</html>

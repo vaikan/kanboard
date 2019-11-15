@@ -2,10 +2,6 @@
 
 namespace Kanboard\Controller;
 
-use Kanboard\Filter\UserNameFilter;
-use Kanboard\Formatter\UserAutoCompleteFormatter;
-use Kanboard\Model\UserModel;
-
 /**
  * User Ajax Controller
  *
@@ -22,9 +18,8 @@ class UserAjaxController extends BaseController
     public function autocomplete()
     {
         $search = $this->request->getStringParam('term');
-        $filter = $this->userQuery->withFilter(new UserNameFilter($search));
-        $filter->getQuery()->asc(UserModel::TABLE.'.name')->asc(UserModel::TABLE.'.username');
-        $this->response->json($filter->format(new UserAutoCompleteFormatter($this->container)));
+        $users = $this->userManager->find($search);
+        $this->response->json($this->userAutoCompleteFormatter->withUsers($users)->format());
     }
 
     /**
@@ -35,9 +30,10 @@ class UserAjaxController extends BaseController
     public function mention()
     {
         $project_id = $this->request->getStringParam('project_id');
-        $query = $this->request->getStringParam('q');
+        $query = $this->request->getStringParam('search');
         $users = $this->projectPermissionModel->findUsernames($project_id, $query);
-        $this->response->json($users);
+
+        $this->response->json($this->userMentionFormatter->withUsers($users)->format());
     }
 
     /**

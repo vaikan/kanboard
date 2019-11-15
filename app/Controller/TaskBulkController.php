@@ -32,9 +32,10 @@ class TaskBulkController extends BaseController
             'project' => $project,
             'values' => $values,
             'errors' => $errors,
-            'users_list' => $this->projectUserRoleModel->getAssignableUsersList($project['id'], true, false, true),
+            'users_list' => $this->projectUserRoleModel->getAssignableUsersList($project['id'], true, false, $project['is_private'] == 1),
             'colors_list' => $this->colorModel->getList(),
             'categories_list' => $this->categoryModel->getList($project['id']),
+            'task_description_templates' => $this->predefinedTaskDescriptionModel->getList($project['id']),
         )));
     }
 
@@ -47,7 +48,12 @@ class TaskBulkController extends BaseController
         $values = $this->request->getValues();
         list($valid, $errors) = $this->taskValidator->validateBulkCreation($values);
 
-        if ($valid) {
+        if (! $valid) {
+            $this->show($values, $errors);
+        } else if (! $this->helper->projectRole->canCreateTaskInColumn($project['id'], $values['column_id'])) {
+            $this->flash->failure(t('You cannot create tasks in this column.'));
+            $this->response->redirect($this->helper->url->to('BoardViewController', 'show', array('project_id' => $project['id'])), true);
+        } else {
             $this->createTasks($project, $values);
             $this->response->redirect($this->helper->url->to(
                 'BoardViewController',
@@ -55,8 +61,6 @@ class TaskBulkController extends BaseController
                 array('project_id' => $project['id']),
                 'swimlane-'. $values['swimlane_id']
             ), true);
-        } else {
-            $this->show($values, $errors);
         }
     }
 
@@ -82,8 +86,23 @@ class TaskBulkController extends BaseController
                     'owner_id' => empty($values['owner_id']) ? 0 : $values['owner_id'],
                     'color_id' => $values['color_id'],
                     'project_id' => $project['id'],
+                    'description' => $this->getTaskDescription($project, $values),
+                    'tags' => $values['tags'],
+                    'priority' => $values['priority'],
+                    'score' => $values['score'],
+                    'time_estimated' => $values['time_estimated'],
+                    'date_due' => $values['date_due'],
                 ));
             }
         }
+    }
+
+    protected function getTaskDescription(array $project, array $values)
+    {
+        if (empty($values['task_description_template_id'])) {
+            return '';
+        }
+
+        return $this->predefinedTaskDescriptionModel->getDescriptionById($project['id'], $values['task_description_template_id']);
     }
 }

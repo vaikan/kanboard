@@ -25,6 +25,19 @@ class TextHelper extends Base
     }
 
     /**
+     * Join with HTML escaping
+     *
+     * @param  $glue
+     * @param  array $list
+     * @return string
+     */
+    public function implode($glue, array $list)
+    {
+        array_walk($list, function (&$value) { $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8', false); });
+        return implode($glue, $list);
+    }
+
+    /**
      * Markdown transformation
      *
      * @param  string    $text
@@ -39,18 +52,6 @@ class TextHelper extends Base
     }
 
     /**
-     * Escape Markdown text that need to be stored in HTML attribute
-     *
-     * @access public
-     * @param  string $text
-     * @return mixed
-     */
-    public function markdownAttribute($text)
-    {
-        return htmlentities($this->markdown($text), ENT_QUOTES, 'UTF-8');
-    }
-
-    /**
      * Format a file size
      *
      * @param  integer  $size        Size in bytes
@@ -59,6 +60,10 @@ class TextHelper extends Base
      */
     public function bytes($size, $precision = 2)
     {
+        if ($size == 0) {
+            return 0;
+        }
+
         $base = log($size) / log(1024);
         $suffixes = array('', 'k', 'M', 'G', 'T');
 
@@ -73,19 +78,19 @@ class TextHelper extends Base
      */
     public function phpToBytes($val)
     {
-        $val = trim($val);
-        $last = strtolower($val[strlen($val)-1]);
+        $size = (int) substr($val, 0, -1);
+        $last = strtolower(substr($val, -1));
 
         switch ($last) {
             case 'g':
-                $val *= 1024;
+                $size *= 1024;
             case 'm':
-                $val *= 1024;
+                $size *= 1024;
             case 'k':
-                $val *= 1024;
+                $size *= 1024;
         }
 
-        return $val;
+        return $size;
     }
 
     /**
